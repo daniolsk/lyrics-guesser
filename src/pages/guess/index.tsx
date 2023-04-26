@@ -36,41 +36,58 @@ export default function Guess({ song, queryArtist, error }: { song: SongObj; que
 	};
 
 	return (
-		<main className={`flex min-h-screen flex-col items-center p-24 ${isGuessed ? `${isCorrect ? 'bg-green-900' : 'bg-red-900'}` : ''}`}>
+		<main
+			className={`flex min-h-screen flex-col justify-center items-center p-4 ${
+				isGuessed ? `${isCorrect ? 'bg-green-900' : 'bg-red-900'}` : ''
+			}`}
+		>
 			{error ? (
-				<div>{error}</div>
+				<div className="flex flex-col items-center">
+					<div className="text-2xl">{error}</div>
+					<button
+						onClick={() => router.reload()}
+						className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+					>
+						Try again
+					</button>
+				</div>
 			) : (
 				<div className="flex flex-col items-center">
 					<Image
 						src={song.songImageArt ? song.songImageArt : song.songImage}
-						width={300}
-						height={300}
+						width={210}
+						height={210}
+						priority
 						alt="song image"
-						className={`mb-16 ${!isGuessed ? `grayscale blur-lg` : ``}`}
+						className={`mb-10 ${!isGuessed ? `grayscale blur-lg` : ``}`}
 					/>
-					<div className="text-center italic mb-10">
-						<div className="text-2xl">&quot;{song.firstVerse}</div>
-						<div className="text-2xl">{song.secondVerse}&quot;</div>
+					<div className="text-center italic p-2">
+						<div className="text-lg">&quot;{song.firstVerse}</div>
+						<div className="text-lg">{song.secondVerse}&quot;</div>
 					</div>
 					<form className="font-semibold flex flex-col items-center" onSubmit={(e) => handleSubmit(e)}>
 						<input
 							type="text"
-							className="bg-transparent border-b-2 text-3xl text-center p-4 mb-2"
+							className="bg-transparent border-b-2 text-2xl text-center p-2 mb-2"
 							value={guess}
 							onChange={(e) => setGuess(e.target.value)}
 						/>
-						<div className="flex justify-center text-2xl mb-8"> by {song.songArtist}</div>
-						<input
-							disabled={isGuessed || guess.length == 0}
-							value="Check"
-							type="submit"
-							className="border-white border-2 px-4 py-2 cursor-pointer text-xl hover:bg-white hover:text-black"
-						/>
+						<div className="flex justify-center text-lg mb-5"> by {song.songArtist}</div>
+						{isGuessed ? (
+							''
+						) : (
+							<input
+								disabled={isGuessed || guess.length == 0}
+								value="Check"
+								type="submit"
+								className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+							/>
+						)}
 					</form>
 					{isGuessed ? (
 						<button
 							onClick={() => router.reload()}
-							className="border-white border-2 mt-4 px-4 py-2 cursor-pointer text-xl hover:bg-white hover:text-black"
+							className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 						>
 							Try again
 						</button>
