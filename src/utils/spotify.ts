@@ -17,7 +17,7 @@ export const getToken = async () => {
 		body: urlencoded,
 	});
 
-	if (!response.ok) console.error('STATUS ERROR: ' + response.status);
+	if (!response.ok) console.error('ERROR: Request failed' + response.status);
 
 	const data = await response.json();
 
@@ -36,7 +36,7 @@ export const getArtist = async (artistId: string) => {
 		},
 	});
 
-	if (!response.ok) console.error('STATUS ERROR: ' + response.status);
+	if (!response.ok) console.error('ERROR: Request failed' + response.status);
 
 	const data = await response.json();
 	return data;
@@ -54,7 +54,7 @@ export const getAllArtistAlbums = async (artistId: string) => {
 		},
 	});
 
-	if (!response.ok) console.error('STATUS ERROR: ' + response.status);
+	if (!response.ok) console.error('ERROR: Request failed with status: ' + response.status);
 
 	const data = await response.json();
 	return data;
@@ -71,7 +71,7 @@ export const getAlbumTracks = async (albumId: string) => {
 		},
 	});
 
-	if (!response.ok) console.error('STATUS ERROR: ' + response.status);
+	if (!response.ok) console.error('ERROR: Request failed' + response.status);
 
 	const data = await response.json();
 	return data;
@@ -91,7 +91,7 @@ export const getArtistId = async (artistName: string) => {
 		}
 	);
 
-	if (!response.ok) console.error('STATUS ERROR: ' + response.status);
+	if (!response.ok) console.error('ERROR: Request failed' + response.status);
 
 	const data = await response.json();
 

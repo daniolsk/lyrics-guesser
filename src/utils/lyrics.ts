@@ -14,11 +14,12 @@ export const getLyrics = async (title: string, artist?: string) => {
 
 	const lyrics = await songs[0].lyrics();
 	const lyricsArray = lyrics.split('\n').filter((l: string) => l.length && l[0] !== '[');
-	const indexLyrics = Math.floor(Math.random() * (lyricsArray.length - 1));
+	const indexLyrics = Math.floor(Math.random() * (lyricsArray.length - 3));
 
 	return {
 		firstVerse: lyricsArray[indexLyrics],
 		secondVerse: lyricsArray[indexLyrics + 1],
+		nextVerses: [lyricsArray[indexLyrics + 2], lyricsArray[indexLyrics + 3]],
 		songTitle,
 		songImage,
 		songArtist,
