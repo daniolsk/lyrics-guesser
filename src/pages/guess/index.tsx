@@ -15,7 +15,7 @@ type SongObj = {
 	songImageArt: string;
 };
 
-export default function Guess({ song, queryArtist, error }: { song: SongObj; queryArtist: string; error?: string }) {
+export default function Guess({ song, error }: { song: SongObj; error?: string }) {
 	const router = useRouter();
 
 	const [guess, setGuess] = useState('');
@@ -62,6 +62,7 @@ export default function Guess({ song, queryArtist, error }: { song: SongObj; que
 			) : (
 				<div className="flex flex-col items-center">
 					<Image
+						onContextMenu={(e) => e.preventDefault()}
 						src={song.songImageArt ? song.songImageArt : song.songImage}
 						width={220}
 						height={220}
@@ -142,7 +143,6 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		return {
 			props: {
 				song: lyricsObj,
-				queryArtist: artist,
 			},
 		};
 	} catch (error) {
