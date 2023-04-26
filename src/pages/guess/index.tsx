@@ -4,6 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
+import stringSim from 'string-similarity';
 
 import useAudio from '@/components/useAudio';
 import { getLyrics } from '@/utils/lyrics';
@@ -21,13 +22,17 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 	const [showImg, setShowImg] = useState(false);
 	const [showNextVerses, setShowNextVerses] = useState(false);
 
-	const { playing, toggle } = useAudio(song.previewUrl);
+	const { playing, toggle } = useAudio(song ? song.previewUrl : '');
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setIsGuessed(true);
 
-		if (guess.toUpperCase() == song.songTitle.toUpperCase()) {
+		const sim = stringSim.compareTwoStrings(guess.toUpperCase(), song.songTitle.toUpperCase());
+
+		console.log(sim);
+
+		if (sim >= 0.75) {
 			setIsCorrect(true);
 		} else {
 			setIsCorrect(false);

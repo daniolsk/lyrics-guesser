@@ -5,7 +5,7 @@ const Client = new Genius.Client();
 export const getLyrics = async (title: string, artist?: string) => {
 	const songs = await Client.songs.search(title + ' ' + (artist ? artist : ''));
 
-	const songTitle = songs[0].title;
+	const songTitle = songs[0].title.replace(/(^[\s\u200b]*|[\s\u200b]*$)/g, '');
 	const songImageArt = songs[0].raw.song_art_image_url;
 	const songImage = songs[0].image;
 	const songArtist = songs[0].artist.name;

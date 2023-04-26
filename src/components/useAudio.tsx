@@ -7,8 +7,6 @@ const useAudio = (url: string) => {
 	useEffect(() => {
 		let audio = new Audio(url);
 
-		console.log(url);
-
 		audio.volume = 0.1;
 
 		audio.addEventListener('ended', () => setPlaying(false));
