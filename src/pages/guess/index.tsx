@@ -15,6 +15,8 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 	const [isGuessed, setIsGuessed] = useState(false);
 	const [isCorrect, setIsCorrect] = useState<Boolean>();
 	const [isLoading, setIsLoading] = useState(false);
+	const [showImg, setShowImg] = useState(false);
+	const [showNextVerses, setShowNextVerses] = useState(false);
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -50,66 +52,97 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 					</div>
 				) : (
 					<div className="flex flex-col items-center">
-						<Image
-							onContextMenu={(e) => e.preventDefault()}
-							src={song.songImageArt ? song.songImageArt : song.songImage}
-							width={220}
-							height={220}
-							priority
-							alt="song image"
-							className={`mb-10 shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${!isGuessed ? `grayscale blur-lg` : ``}`}
-						/>
-						<div className="text-center italic p-2 mb-2 font-semibold">
-							<div className="text-lg">&quot;{song.firstVerse}</div>
-							<div className="text-lg">{song.secondVerse}&quot;</div>
-						</div>
-						<form className="flex flex-col items-center" onSubmit={(e) => handleSubmit(e)}>
-							{isGuessed ? (
-								<div className="flex flex-col items-center">
-									<div className="text-2xl font-semibold">{song.songTitle}</div>
-								</div>
-							) : (
-								<input
-									type="text"
-									className="bg-transparent border-b-2 text-2xl text-center p-2 mb-2"
-									value={guess}
-									onChange={(e) => setGuess(e.target.value)}
-								/>
-							)}
-							<div className="flex justify-center font-normal text-base mb-5"> by {song.songArtist}</div>
-							{isGuessed ? (
+						<div className="mb-12 cursor-pointer relative" onClick={() => setShowImg(true)}>
+							{showImg || isGuessed ? (
 								''
 							) : (
-								<input
-									disabled={isGuessed || guess.length == 0}
-									value="Check"
-									type="submit"
-									className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
-								/>
+								<div className="absolute h-full w-full flex z-10 justify-center items-center opacity-70">
+									Hint: Click to reveal image
+								</div>
 							)}
-						</form>
+							<Image
+								onContextMenu={(e) => e.preventDefault()}
+								src={song.songImageArt ? song.songImageArt : song.songImage}
+								width={240}
+								height={240}
+								priority
+								alt="song image"
+								className={`shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${isGuessed || showImg ? `` : `grayscale blur-lg`}`}
+							/>
+						</div>
+
+						<div className="text-center italic p-2 mb-4 font-semibold">
+							<div className="text-lg">{song.firstVerse}</div>
+							<div className="text-lg">{song.secondVerse}</div>
+							{showNextVerses ? (
+								''
+							) : (
+								<button className="mt-2 text-gray-400" onClick={() => setShowNextVerses(true)}>
+									Hint: Reveal next two verses
+								</button>
+							)}
+
+							{showNextVerses ? (
+								<>
+									{song.nextVerses.map((verse, index) => (
+										<div key={index} className="text-lg">
+											{verse}
+										</div>
+									))}
+								</>
+							) : (
+								''
+							)}
+						</div>
+					</div>
+				)}
+				<form className="flex flex-col items-center" onSubmit={(e) => handleSubmit(e)}>
+					<div className="mb-5">
 						{isGuessed ? (
-							<div className="flex gap-4">
-								<button
-									onClick={() => {
-										setIsLoading(true);
-										router.reload();
-									}}
-									className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
-								>
-									Try again
-								</button>
-								<button
-									onClick={() => router.push('/')}
-									className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
-								>
-									Back
-								</button>
+							<div className="flex flex-col items-center">
+								<div className="text-2xl font-bold">{song.songTitle}</div>
 							</div>
 						) : (
-							''
+							<input
+								type="text"
+								className="bg-transparent border-b-2 text-2xl font-semibold text-center p-2 mb-2"
+								value={guess}
+								onChange={(e) => setGuess(e.target.value)}
+							/>
 						)}
+						<div className="flex justify-center font-normal text-base"> by {song.songArtist}</div>
 					</div>
+					{isGuessed ? (
+						''
+					) : (
+						<input
+							disabled={isGuessed || guess.length == 0}
+							value="Check"
+							type="submit"
+							className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+						/>
+					)}
+				</form>
+				{isGuessed ? (
+					<div className="flex gap-4">
+						<button
+							onClick={() => {
+								setIsLoading(true);
+								router.reload();
+							}}
+							className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+						>
+							Try again
+						</button>
+						<button
+							onClick={() => router.push('/')}
+							className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+						>
+							Back
+						</button>
+					</div>
+				) : (
+					''
 				)}
 				{isLoading ? <Loading textColor="white" /> : ''}
 			</main>
