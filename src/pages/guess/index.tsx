@@ -61,17 +61,24 @@ export default function Guess({ song, queryArtist, error }: { song: SongObj; que
 						alt="song image"
 						className={`mb-10 ${!isGuessed ? `grayscale blur-lg` : ``}`}
 					/>
-					<div className="text-center italic p-2">
+					<div className="text-center italic p-2 mb-2">
 						<div className="text-lg">&quot;{song.firstVerse}</div>
 						<div className="text-lg">{song.secondVerse}&quot;</div>
 					</div>
 					<form className="font-semibold flex flex-col items-center" onSubmit={(e) => handleSubmit(e)}>
-						<input
-							type="text"
-							className="bg-transparent border-b-2 text-2xl text-center p-2 mb-2"
-							value={guess}
-							onChange={(e) => setGuess(e.target.value)}
-						/>
+						{isGuessed ? (
+							<div className="flex flex-col items-center">
+								<div>Correct answer:</div>
+								<div className="text-2xl">{song.songTitle}</div>
+							</div>
+						) : (
+							<input
+								type="text"
+								className="bg-transparent border-b-2 text-2xl text-center p-2 mb-2"
+								value={guess}
+								onChange={(e) => setGuess(e.target.value)}
+							/>
+						)}
 						<div className="flex justify-center text-lg mb-5"> by {song.songArtist}</div>
 						{isGuessed ? (
 							''
