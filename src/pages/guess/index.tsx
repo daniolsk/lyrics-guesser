@@ -30,21 +30,24 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 	};
 
 	return (
-		<div className={`flex flex-col justify-between min-h-screen ${isGuessed ? `${isCorrect ? 'bg-green-900' : 'bg-red-900'}` : ''}`}>
-			<main className="flex-1 flex flex-col justify-center items-center p-5">
+		<div className={`flex min-h-[100svh] flex-col justify-between ${isGuessed ? `${isCorrect ? 'bg-green-900' : 'bg-red-900'}` : ''}`}>
+			<main className="flex flex-1 flex-col items-center justify-center p-5 pb-0">
 				{error ? (
 					<div className="flex flex-col items-center">
-						<div className="text-2xl">{error}</div>
+						<div className="mb-4 text-xl">{error}</div>
 						<div className="flex gap-4">
 							<button
-								onClick={() => router.reload()}
-								className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+								onClick={() => {
+									setIsLoading(true);
+									router.reload();
+								}}
+								className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 							>
 								Try again
 							</button>
 							<button
 								onClick={() => router.push('/')}
-								className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+								className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 							>
 								Back
 							</button>
@@ -52,32 +55,36 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 					</div>
 				) : (
 					<div className="flex flex-col items-center">
-						<div className="mb-12 cursor-pointer relative" onClick={() => setShowImg(true)}>
+						<div className="relative mb-6 h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
 							{showImg || isGuessed ? (
 								''
 							) : (
-								<div className="absolute h-full w-full flex z-10 justify-center items-center opacity-70">
+								<div className="absolute z-10 flex h-full w-full items-center justify-center opacity-70 md:text-base">
 									Hint: Click to reveal image
 								</div>
 							)}
 							<Image
+								fill
 								onContextMenu={(e) => e.preventDefault()}
 								src={song.songImageArt ? song.songImageArt : song.songImage}
-								width={240}
-								height={240}
 								priority
 								alt="song image"
-								className={`shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${isGuessed || showImg ? `` : `grayscale blur-lg`}`}
+								className={`rounded-md object-contain shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
+									isGuessed || showImg ? `` : `blur-lg grayscale`
+								}`}
 							/>
 						</div>
 
-						<div className="text-center italic p-2 mb-4 font-semibold">
-							<div className="text-lg">{song.firstVerse}</div>
-							<div className="text-lg">{song.secondVerse}</div>
+						<div className="mb-6 text-center font-semibold italic">
+							<div className="text-base sm:text-lg md:text-xl">{song.firstVerse}</div>
+							<div className="text-base sm:text-lg md:text-xl">{song.secondVerse}</div>
 							{showNextVerses ? (
 								''
 							) : (
-								<button className="mt-2 text-gray-400" onClick={() => setShowNextVerses(true)}>
+								<button
+									className="mt-2 text-sm text-gray-400 hover:text-gray-300 md:text-base"
+									onClick={() => setShowNextVerses(true)}
+								>
 									Hint: Reveal next two verses
 								</button>
 							)}
@@ -85,7 +92,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 							{showNextVerses ? (
 								<>
 									{song.nextVerses.map((verse, index) => (
-										<div key={index} className="text-lg">
+										<div key={index} className="text-base sm:text-lg md:text-xl">
 											{verse}
 										</div>
 									))}
@@ -94,59 +101,59 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 								''
 							)}
 						</div>
-					</div>
-				)}
-				<form className="flex flex-col items-center" onSubmit={(e) => handleSubmit(e)}>
-					<div className="mb-5">
+						<form className="flex flex-col items-center" onSubmit={(e) => handleSubmit(e)}>
+							<div className="mb-2">
+								{isGuessed ? (
+									<div className="flex flex-col items-center">
+										<div className="mb-1 text-center text-2xl font-bold md:text-3xl">&quot;{song.songTitle}&quot;</div>
+									</div>
+								) : (
+									<input
+										type="text"
+										className="mb-2 border-b-2 bg-transparent p-2 text-center text-xl font-semibold md:text-2xl"
+										value={guess}
+										onChange={(e) => setGuess(e.target.value)}
+									/>
+								)}
+								<div className="flex justify-center text-base font-normal md:text-lg"> by {song.songArtist}</div>
+							</div>
+							{isGuessed ? (
+								''
+							) : (
+								<input
+									disabled={isGuessed || guess.length == 0}
+									value="Check"
+									type="submit"
+									className="mb-4 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+								/>
+							)}
+						</form>
 						{isGuessed ? (
-							<div className="flex flex-col items-center">
-								<div className="text-2xl font-bold">{song.songTitle}</div>
+							<div className="flex gap-4">
+								<button
+									onClick={() => {
+										setIsLoading(true);
+										router.reload();
+									}}
+									className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+								>
+									Try again
+								</button>
+								<button
+									onClick={() => router.push('/')}
+									className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+								>
+									Back
+								</button>
 							</div>
 						) : (
-							<input
-								type="text"
-								className="bg-transparent border-b-2 text-2xl font-semibold text-center p-2 mb-2"
-								value={guess}
-								onChange={(e) => setGuess(e.target.value)}
-							/>
+							''
 						)}
-						<div className="flex justify-center font-normal text-base"> by {song.songArtist}</div>
 					</div>
-					{isGuessed ? (
-						''
-					) : (
-						<input
-							disabled={isGuessed || guess.length == 0}
-							value="Check"
-							type="submit"
-							className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
-						/>
-					)}
-				</form>
-				{isGuessed ? (
-					<div className="flex gap-4">
-						<button
-							onClick={() => {
-								setIsLoading(true);
-								router.reload();
-							}}
-							className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
-						>
-							Try again
-						</button>
-						<button
-							onClick={() => router.push('/')}
-							className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
-						>
-							Back
-						</button>
-					</div>
-				) : (
-					''
 				)}
 				{isLoading ? <Loading textColor="white" /> : ''}
 			</main>
-			<footer className="text-white p-4 text-center">Made with ❤️ by Daniel Skowron</footer>
+			<footer className="p-4 text-center text-sm text-white">Made with ❤️ by Daniel Skowron</footer>
 		</div>
 	);
 }
