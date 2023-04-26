@@ -1,10 +1,10 @@
-import Image from 'next/image';
+import { FormEvent, useState } from 'react';
 
 import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'] });
 
-import { FormEvent, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Loading from '@/components/Loading';
 
 export default function Home() {
 	const [artist, setArtist] = useState('');
@@ -39,9 +39,9 @@ export default function Home() {
 						value={'Start'}
 					/>
 				</form>
-				{isLoading ? <div className="text-xl font-semibold">Loading...</div> : ''}
+				{isLoading ? <Loading /> : ''}
 			</main>
-			<footer className="text-gray-500 p-4 text-center">Made with ❤️ by Daniel Skowron</footer>
+			<footer className="text-white p-4 text-center">Made with ❤️ by Daniel Skowron</footer>
 		</div>
 	);
 }

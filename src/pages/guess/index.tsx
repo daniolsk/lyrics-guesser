@@ -5,6 +5,7 @@ import { GetServerSideProps } from 'next';
 
 import { getLyrics } from '@/utils/lyrics';
 import { getRandomArtistTrack } from '@/utils/spotify';
+import Loading from '@/components/Loading';
 import { type SongObj } from '@/utils/types';
 
 export default function Guess({ song, error }: { song: SongObj; error?: string }) {
@@ -13,12 +14,11 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 	const [guess, setGuess] = useState('');
 	const [isGuessed, setIsGuessed] = useState(false);
 	const [isCorrect, setIsCorrect] = useState<Boolean>();
+	const [isLoading, setIsLoading] = useState(false);
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setIsGuessed(true);
-
-		console.log(guess, song.songTitle);
 
 		if (guess.toUpperCase() == song.songTitle.toUpperCase()) {
 			setIsCorrect(true);
@@ -28,12 +28,8 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 	};
 
 	return (
-		<div className="flex flex-col justify-between min-h-screen">
-			<main
-				className={`flex-1 flex flex-col justify-center items-center p-5 ${
-					isGuessed ? `${isCorrect ? 'bg-green-900' : 'bg-red-900'}` : ''
-				}`}
-			>
+		<div className={`flex flex-col justify-between min-h-screen ${isGuessed ? `${isCorrect ? 'bg-green-900' : 'bg-red-900'}` : ''}`}>
+			<main className="flex-1 flex flex-col justify-center items-center p-5">
 				{error ? (
 					<div className="flex flex-col items-center">
 						<div className="text-2xl">{error}</div>
@@ -95,7 +91,10 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 						{isGuessed ? (
 							<div className="flex gap-4">
 								<button
-									onClick={() => router.reload()}
+									onClick={() => {
+										setIsLoading(true);
+										router.reload();
+									}}
 									className="border-white font-semibold border-2 mt-4 px-4 mb-8 py-2 cursor-pointer text-xl hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 								>
 									Try again
@@ -112,8 +111,9 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 						)}
 					</div>
 				)}
+				{isLoading ? <Loading textColor="white" /> : ''}
 			</main>
-			<footer className="text-gray-500 p-4 text-center">Made with ❤️ by Daniel Skowron</footer>
+			<footer className="text-white p-4 text-center">Made with ❤️ by Daniel Skowron</footer>
 		</div>
 	);
 }
