@@ -77,10 +77,10 @@ export const getAlbumTracks = async (albumId: string) => {
 	return data;
 };
 
-export const getArtistId = async (artistName: string, locale?: string = 'PL') => {
+export const getArtistId = async (artistName: string) => {
 	const token = await getToken();
 	const response = await fetch(
-		`https://api.spotify.com/v1/search?query=${artistName}&type=artist&market=${locale}&locale=pl-PL%2Cpl%3Bq%3D0.9%2Cen-US%3Bq%3D0.8%2Cen%3Bq%3D0.7&offset=0&limit=20`,
+		`https://api.spotify.com/v1/search?query=${artistName}&type=artist&market=PL&locale=pl-PL%2Cpl%3Bq%3D0.9%2Cen-US%3Bq%3D0.8%2Cen%3Bq%3D0.7&offset=0&limit=20`,
 		{
 			method: 'GET',
 			headers: {
