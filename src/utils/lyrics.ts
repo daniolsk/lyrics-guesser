@@ -10,8 +10,6 @@ export const getLyrics = async (title: string, artist?: string) => {
 	const songImage = songs[0].image;
 	const songArtist = songs[0].artist.name;
 
-	// console.log(songs);
-
 	const lyrics = await songs[0].lyrics();
 	const lyricsArray = lyrics.split('\n').filter((l: string) => l.length && l[0] !== '[');
 	const indexLyrics = Math.floor(Math.random() * (lyricsArray.length - 3));

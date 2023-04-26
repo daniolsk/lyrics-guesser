@@ -117,5 +117,5 @@ export const getRandomArtistTrack = async (artistName: string) => {
 
 	const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
 
-	return randomTrack.name;
+	return { randomTrack: randomTrack.name, previewUrl: randomTrack.preview_url, url: randomTrack.external_urls.spotify };
 };

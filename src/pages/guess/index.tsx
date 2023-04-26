@@ -1,12 +1,15 @@
 import { FormEvent, useState } from 'react';
+
 import Image from 'next/image';
+import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 
+import useAudio from '@/components/useAudio';
 import { getLyrics } from '@/utils/lyrics';
 import { getRandomArtistTrack } from '@/utils/spotify';
 import Loading from '@/components/Loading';
-import { type SongObj } from '@/utils/types';
+import { type LyricsObj, type SongObj } from '@/utils/types';
 
 export default function Guess({ song, error }: { song: SongObj; error?: string }) {
 	const router = useRouter();
@@ -17,6 +20,8 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 	const [isLoading, setIsLoading] = useState(false);
 	const [showImg, setShowImg] = useState(false);
 	const [showNextVerses, setShowNextVerses] = useState(false);
+
+	const { playing, toggle } = useAudio(song.previewUrl);
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -55,25 +60,42 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 					</div>
 				) : (
 					<div className="flex flex-col items-center">
-						<div className="relative mb-6 h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
-							{showImg || isGuessed ? (
-								''
-							) : (
-								<div className="absolute z-10 flex h-full w-full items-center justify-center opacity-70 md:text-base">
-									Hint: Click to reveal image
+						{isGuessed ? (
+							<Link href={song.url} target="_blank" className="mb-6">
+								<div className="relative h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
+									<Image
+										fill
+										onContextMenu={(e) => e.preventDefault()}
+										src={song.songImageArt ? song.songImageArt : song.songImage}
+										priority
+										alt="song image"
+										className={`rounded-md object-contain shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
+											isGuessed || showImg ? `` : `blur-lg grayscale`
+										}`}
+									/>
 								</div>
-							)}
-							<Image
-								fill
-								onContextMenu={(e) => e.preventDefault()}
-								src={song.songImageArt ? song.songImageArt : song.songImage}
-								priority
-								alt="song image"
-								className={`rounded-md object-contain shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
-									isGuessed || showImg ? `` : `blur-lg grayscale`
-								}`}
-							/>
-						</div>
+							</Link>
+						) : (
+							<div className="relative mb-6 h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
+								{showImg || isGuessed ? (
+									''
+								) : (
+									<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center opacity-70 md:text-base">
+										Hint: Click to reveal image
+									</div>
+								)}
+								<Image
+									fill
+									onContextMenu={(e) => e.preventDefault()}
+									src={song.songImageArt ? song.songImageArt : song.songImage}
+									priority
+									alt="song image"
+									className={`rounded-md object-contain shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
+										isGuessed || showImg ? `` : `blur-lg grayscale`
+									}`}
+								/>
+							</div>
+						)}
 
 						<div className="mb-6 text-center font-semibold italic">
 							<div className="text-base sm:text-lg md:text-xl">{song.firstVerse}</div>
@@ -115,7 +137,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 										onChange={(e) => setGuess(e.target.value)}
 									/>
 								)}
-								<div className="flex justify-center text-base font-normal md:text-lg"> by {song.songArtist}</div>
+								<div className="flex justify-center text-base font-semibold md:text-lg"> by {song.songArtist}</div>
 							</div>
 							{isGuessed ? (
 								''
@@ -128,6 +150,17 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 								/>
 							)}
 						</form>
+						{isGuessed && song.previewUrl ? (
+							<button className="text-lg" onClick={toggle}>
+								{playing ? (
+									<Image src="/pause.svg" width={40} height={40} alt="pause song" />
+								) : (
+									<Image src="/play.svg" width={40} height={40} alt="play song" />
+								)}
+							</button>
+						) : (
+							''
+						)}
 						{isGuessed ? (
 							<div className="flex gap-4">
 								<button
@@ -171,13 +204,15 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 	let artist = context.query.artist as string;
 
 	try {
-		const randomSong: string = await getRandomArtistTrack(artist);
+		const randomSong: { randomTrack: string; previewUrl: string; url: string } = await getRandomArtistTrack(artist);
 
-		let lyricsObj: SongObj = await getLyrics(randomSong, artist);
+		let lyricsObj: LyricsObj = await getLyrics(randomSong.randomTrack, artist);
+
+		let songObj: SongObj = { ...lyricsObj, previewUrl: randomSong.previewUrl, url: randomSong.url };
 
 		return {
 			props: {
-				song: lyricsObj,
+				song: songObj,
 			},
 		};
 	} catch (error) {

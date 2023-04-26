@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { getLyrics } from '@/utils/lyrics';
 import { getRandomArtistTrack } from '@/utils/spotify';
-import { type SongObj } from '@/utils/types';
+import { type LyricsObj, type SongObj } from '@/utils/types';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<SongObj | { error: string }>) {
 	if (req.method != 'GET') {
@@ -17,11 +17,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 	let artist = req.query.artist as string;
 
 	try {
-		const randomSong: string = await getRandomArtistTrack(artist);
+		const randomSong: { randomTrack: string; previewUrl: string; url: string } = await getRandomArtistTrack(artist);
 
-		let lyricsObj: SongObj = await getLyrics(randomSong, artist);
+		let lyricsObj: LyricsObj = await getLyrics(randomSong.randomTrack, artist);
 
-		res.status(200).json(lyricsObj);
+		let songObj: SongObj = { ...lyricsObj, previewUrl: randomSong.previewUrl, url: randomSong.url };
+
+		res.status(200).json(songObj);
 	} catch (error) {
 		console.log(error);
 
