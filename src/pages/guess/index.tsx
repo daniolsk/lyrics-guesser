@@ -65,27 +65,47 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 					<div className="flex flex-col items-center">
 						{isGuessed ? (
 							<Link href={song.url} target="_blank" className="mb-10">
-								<div className="relative h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
+								<div
+									className="relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72"
+									onClick={() => setShowImg(true)}
+								>
 									<Image
 										fill
 										onContextMenu={(e) => e.preventDefault()}
 										src={song.songImageArt ? song.songImageArt : song.songImage}
 										priority
 										quality={100}
+										sizes="(max-width: 640px) 288px, 240px"
 										alt="song image"
-										className={`rounded-md object-contain shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
+										className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
 											isGuessed || showImg ? `` : `blur-lg grayscale`
 										}`}
 									/>
 								</div>
 							</Link>
 						) : (
-							<div className="relative mb-12 h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
-								{showImg || isGuessed ? (
+							<div
+								className={`relative mb-12 h-60 w-60 ${showImg ? '' : 'cursor-pointer'} rounded-md p-4 sm:h-72 sm:w-72`}
+								onClick={() => setShowImg(true)}
+							>
+								{showImg ? (
 									''
 								) : (
-									<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center opacity-70 md:text-base">
-										Hint: Click to reveal image
+									<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center bg-transparent fill-gray-300 font-semibold text-gray-300 hover:fill-gray-100 hover:text-gray-100 md:text-base">
+										<svg
+											width="20px"
+											height="20px"
+											viewBox="0 0 24 24"
+											fill="none"
+											xmlns="http://www.w3.org/2000/svg"
+											className="mr-1 fill-inherit drop-shadow-[2px_5px_5px_rgb(0,0,0)]"
+										>
+											<path
+												className="fill-inherit"
+												d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zM7.92 9.234v.102a.5.5 0 0 0 .5.5h.997a.499.499 0 0 0 .499-.499c0-1.29.998-1.979 2.34-1.979 1.308 0 2.168.689 2.168 1.67 0 .928-.482 1.359-1.686 1.91l-.344.154C11.379 11.54 11 12.21 11 13.381v.119a.5.5 0 0 0 .5.5h.997a.499.499 0 0 0 .499-.499c0-.516.138-.723.55-.912l.345-.155c1.445-.654 2.529-1.514 2.529-3.39v-.103c0-1.978-1.72-3.441-4.164-3.441-2.478 0-4.336 1.428-4.336 3.734zm2.58 7.757c0 .867.659 1.509 1.491 1.509.85 0 1.509-.642 1.509-1.509 0-.867-.659-1.491-1.509-1.491-.832 0-1.491.624-1.491 1.491z"
+											/>
+										</svg>
+										<div className="text-inherit drop-shadow-[2px_5px_5px_rgb(0,0,0)]">Show image</div>
 									</div>
 								)}
 								<Image
@@ -96,7 +116,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 									quality={100}
 									sizes="(max-width: 640px) 288px, 240px"
 									alt="song image"
-									className={`rounded-md object-contain shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
+									className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
 										isGuessed || showImg ? `` : `blur-lg grayscale`
 									}`}
 								/>
@@ -104,16 +124,32 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 						)}
 
 						<div className="mb-6 text-center font-semibold italic">
-							<div className="text-base sm:text-lg md:text-xl">{song.firstVerse}</div>
-							<div className="text-base sm:text-lg md:text-xl">{song.secondVerse}</div>
+							<div className="text-base sm:text-lg md:text-xl">&quot;{song.firstVerse}</div>
+							<div className="text-base sm:text-lg md:text-xl">
+								{song.secondVerse}
+								{showNextVerses ? '' : '"'}
+							</div>
 							{showNextVerses ? (
 								''
 							) : (
 								<button
-									className="mt-2 text-sm text-gray-400 hover:text-gray-300 md:text-base"
+									className="mt-2 flex w-full cursor-pointer items-center justify-center fill-gray-300 text-sm text-gray-300 hover:fill-gray-200 hover:text-gray-200 md:text-base"
 									onClick={() => setShowNextVerses(true)}
 								>
-									Hint: Reveal next two verses
+									<svg
+										width="20px"
+										height="20px"
+										viewBox="0 0 24 24"
+										fill="none"
+										xmlns="http://www.w3.org/2000/svg"
+										className="mr-1 fill-inherit"
+									>
+										<path
+											className="fill-inherit"
+											d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zM7.92 9.234v.102a.5.5 0 0 0 .5.5h.997a.499.499 0 0 0 .499-.499c0-1.29.998-1.979 2.34-1.979 1.308 0 2.168.689 2.168 1.67 0 .928-.482 1.359-1.686 1.91l-.344.154C11.379 11.54 11 12.21 11 13.381v.119a.5.5 0 0 0 .5.5h.997a.499.499 0 0 0 .499-.499c0-.516.138-.723.55-.912l.345-.155c1.445-.654 2.529-1.514 2.529-3.39v-.103c0-1.978-1.72-3.441-4.164-3.441-2.478 0-4.336 1.428-4.336 3.734zm2.58 7.757c0 .867.659 1.509 1.491 1.509.85 0 1.509-.642 1.509-1.509 0-.867-.659-1.491-1.509-1.491-.832 0-1.491.624-1.491 1.491z"
+										/>
+									</svg>
+									<span className="text-inherit">Show next two verses</span>
 								</button>
 							)}
 
@@ -122,6 +158,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 									{song.nextVerses.map((verse, index) => (
 										<div key={index} className="text-base sm:text-lg md:text-xl">
 											{verse}
+											{index == 1 ? '"' : ''}
 										</div>
 									))}
 								</>
@@ -138,7 +175,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 								) : (
 									<input
 										type="text"
-										className="mb-2 border-b-2 bg-transparent p-2 text-center text-xl font-semibold md:text-2xl"
+										className="mb-2 border-b-2 bg-transparent p-2 text-center text-xl font-semibold focus:outline-none  active:outline-none md:text-2xl"
 										value={guess}
 										onChange={(e) => setGuess(e.target.value)}
 									/>
@@ -190,7 +227,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 						)}
 					</div>
 				)}
-				{isLoading ? <Loading textColor="white" /> : ''}
+				{isLoading ? <Loading /> : ''}
 			</main>
 			<footer className="p-4 text-center text-sm text-white">Made with ❤️ by Daniel Skowron</footer>
 		</div>
