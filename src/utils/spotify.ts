@@ -77,10 +77,12 @@ export const getAlbumTracks = async (albumId: string) => {
 	return data;
 };
 
-export const getArtistId = async (artistName: string) => {
+export const getArtistId = async (artistName: string, market?: string) => {
 	const token = await getToken();
 	const response = await fetch(
-		`https://api.spotify.com/v1/search?query=${artistName}&type=artist&locale=pl-PL%2Cpl%3Bq%3D0.9%2Cen-US%3Bq%3D0.8%2Cen%3Bq%3D0.7&offset=0&limit=20`,
+		`https://api.spotify.com/v1/search?query=${artistName}&type=artist${
+			market ? `&market=${market}` : ''
+		}&locale=pl-PL%2Cpl%3Bq%3D0.9%2Cen-US%3Bq%3D0.8%2Cen%3Bq%3D0.7&offset=0&limit=20`,
 		{
 			method: 'GET',
 			headers: {
@@ -100,10 +102,21 @@ export const getArtistId = async (artistName: string) => {
 	return artists[0].id;
 };
 
-export const getRandomArtistTrack = async (artistName: string) => {
-	let artistId = await getArtistId(artistName);
+export const getRandomArtistTrack = async (artistName: string, market?: string) => {
+	let artistId;
+	try {
+		artistId = await getArtistId(artistName, market);
+	} catch (error) {
+		throw new Error(`Spotify: artist: "${artistName}" not found`);
+	}
 
-	let albums = await getAllArtistAlbums(artistId);
+	let albums;
+
+	try {
+		albums = await getAllArtistAlbums(artistId);
+	} catch (error) {
+		throw new Error(`Spotify: artist with id "${artistId}" - albums not found`);
+	}
 
 	albums = albums.items;
 	albums = albums.filter((album) => album.album_type == 'album');
@@ -111,7 +124,13 @@ export const getRandomArtistTrack = async (artistName: string) => {
 
 	const randomAlbum = albums[Math.floor(Math.random() * albums.length)];
 
-	let tracks = await getAlbumTracks(randomAlbum.id);
+	let tracks;
+
+	try {
+		tracks = await getAlbumTracks(randomAlbum.id);
+	} catch (error) {
+		throw new Error(`Spotify: tracks of album ${randomAlbum.name} not found`);
+	}
 
 	tracks = tracks.items;
 

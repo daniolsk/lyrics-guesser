@@ -42,7 +42,11 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 			<main className="flex flex-1 flex-col items-center justify-center p-5 pb-0">
 				{error ? (
 					<div className="flex flex-col items-center">
-						<div className="mb-4 text-xl">{error}</div>
+						<div className="mb-2 text-center text-xl font-bold md:text-3xl">Error:</div>
+						<div className="mb-2 text-center text-base font-semibold md:text-xl">{error}</div>
+						<div className="mb-4 text-center text-sm font-semibold text-gray-400 md:text-lg">
+							If this error repeats, try specifying country code of your artist
+						</div>
 						<div className="flex gap-4">
 							<button
 								onClick={() => {
@@ -247,8 +251,10 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 	let artist = context.query.artist as string;
 
+	let market = context.query.market ? (context.query.market as string) : undefined;
+
 	try {
-		const randomSong: { randomTrack: string; previewUrl: string; url: string } = await getRandomArtistTrack(artist);
+		const randomSong: { randomTrack: string; previewUrl: string; url: string } = await getRandomArtistTrack(artist, market);
 
 		let lyricsObj: LyricsObj = await getLyrics(randomSong.randomTrack, artist);
 
@@ -259,12 +265,12 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 				song: songObj,
 			},
 		};
-	} catch (error) {
-		console.log(error);
+	} catch (error: any) {
+		console.log(error.message);
 
 		return {
 			props: {
-				error: 'Something went wrong',
+				error: error.message,
 			},
 		};
 	}
