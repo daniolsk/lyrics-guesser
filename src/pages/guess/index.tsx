@@ -177,6 +177,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 										type="text"
 										className="mb-2 border-b-2 bg-transparent p-2 text-center text-xl font-semibold focus:outline-none  active:outline-none md:text-2xl"
 										value={guess}
+										spellCheck={false}
 										onChange={(e) => setGuess(e.target.value)}
 									/>
 								)}

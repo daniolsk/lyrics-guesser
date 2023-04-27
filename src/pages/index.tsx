@@ -30,6 +30,7 @@ export default function Home() {
 							placeholder="Artist name e.g. Eminem"
 							value={artist}
 							onChange={(e) => setArtist(e.target.value)}
+							spellCheck={false}
 						/>
 					</div>
 					<input
