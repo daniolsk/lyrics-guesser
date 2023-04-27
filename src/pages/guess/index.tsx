@@ -84,11 +84,8 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 								</div>
 							</Link>
 						) : (
-							<div
-								className={`relative mb-12 h-60 w-60 ${showImg ? '' : 'cursor-pointer'} rounded-md p-4 sm:h-72 sm:w-72`}
-								onClick={() => setShowImg(true)}
-							>
-								{showImg ? (
+							<div className="relative mb-12 h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
+								{showImg || isGuessed ? (
 									''
 								) : (
 									<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center bg-transparent fill-gray-300 font-semibold text-gray-300 hover:fill-gray-100 hover:text-gray-100 md:text-base">
