@@ -52,7 +52,13 @@ export default function Home() {
 							className="w-16 border-b-2 bg-transparent p-2 text-center text-sm focus:outline-none active:outline-none"
 							placeholder="e.g. PL"
 							value={market}
-							onChange={(e) => setMarket(e.target.value)}
+							onChange={(e) => {
+								if (e.target.value.length <= 2) {
+									setMarket(e.target.value.toUpperCase());
+								} else {
+									return;
+								}
+							}}
 							spellCheck={false}
 						/>
 					</div>
