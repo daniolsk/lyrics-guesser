@@ -15,7 +15,7 @@ export default function Home() {
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 		setIsLoading(true);
-		router.push(`/guess?artist=${artist}`);
+		router.push(`/guess?artist=${artist}${market.length > 0 ? `&market=${market}` : ``}`);
 	};
 
 	return (
