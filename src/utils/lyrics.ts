@@ -3,7 +3,13 @@ import Genius from 'genius-lyrics';
 const Client = new Genius.Client();
 
 export const getLyrics = async (title: string, artist?: string) => {
-	const songs = await Client.songs.search(title + ' ' + (artist ? artist : ''));
+	let songs;
+	try {
+		songs = await Client.songs.search(title + ' ' + (artist ? artist : ''));
+	} catch (error) {
+		console.error(error, title, artist, songs);
+		throw new Error('Genius lyrics search error');
+	}
 
 	const songTitle = songs[0].title.replace(/(^[\s\u200b]*|[\s\u200b]*$)/g, '');
 	const songImageArt = songs[0].raw.song_art_image_url;

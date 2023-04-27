@@ -30,8 +30,6 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 
 		const sim = stringSim.compareTwoStrings(guess.toUpperCase(), song.songTitle.toUpperCase());
 
-		console.log(sim);
-
 		if (sim >= 0.75) {
 			setIsCorrect(true);
 		} else {
@@ -66,13 +64,14 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 				) : (
 					<div className="flex flex-col items-center">
 						{isGuessed ? (
-							<Link href={song.url} target="_blank" className="mb-6">
+							<Link href={song.url} target="_blank" className="mb-10">
 								<div className="relative h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
 									<Image
 										fill
 										onContextMenu={(e) => e.preventDefault()}
 										src={song.songImageArt ? song.songImageArt : song.songImage}
 										priority
+										quality={100}
 										alt="song image"
 										className={`rounded-md object-contain shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
 											isGuessed || showImg ? `` : `blur-lg grayscale`
@@ -81,7 +80,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 								</div>
 							</Link>
 						) : (
-							<div className="relative mb-8 h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
+							<div className="relative mb-12 h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
 								{showImg || isGuessed ? (
 									''
 								) : (
@@ -94,6 +93,8 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 									onContextMenu={(e) => e.preventDefault()}
 									src={song.songImageArt ? song.songImageArt : song.songImage}
 									priority
+									quality={100}
+									sizes="(max-width: 640px) 288px, 240px"
 									alt="song image"
 									className={`rounded-md object-contain shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
 										isGuessed || showImg ? `` : `blur-lg grayscale`
@@ -158,9 +159,9 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 						{isGuessed && song.previewUrl ? (
 							<button className="text-lg" onClick={toggle}>
 								{playing ? (
-									<Image src="/pause.svg" width={40} height={40} alt="pause song" />
+									<Image src="/pause.svg" quality={100} width={40} height={40} alt="pause song" />
 								) : (
-									<Image src="/play.svg" width={40} height={40} alt="play song" />
+									<Image src="/play.svg" quality={100} width={40} height={40} alt="play song" />
 								)}
 							</button>
 						) : (
