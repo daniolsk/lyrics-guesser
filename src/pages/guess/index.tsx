@@ -44,9 +44,6 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 					<div className="flex flex-col items-center">
 						<div className="mb-4 text-center text-xl font-bold md:text-3xl">Error:</div>
 						<div className="mb-2 text-center text-base font-semibold md:text-xl">{error}</div>
-						<div className="mb-4 text-center text-sm font-semibold text-gray-400 md:text-lg">
-							If this error repeats, try specifying country code of your artist
-						</div>
 						<div className="flex gap-4">
 							<button
 								onClick={() => {
