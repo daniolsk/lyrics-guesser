@@ -1,17 +1,12 @@
-//@ts-nocheck
-import { getToken } from '@/utils/spotify';
-import NextAuth from 'next-auth';
+import NextAuth, { type NextAuthOptions } from 'next-auth';
 import SpotifyProvider from 'next-auth/providers/spotify';
-import { TokenFlags } from 'typescript';
 
-export const authOptions = {
-	// Configure one or more authentication providers
+export const authOptions: NextAuthOptions = {
 	providers: [
 		SpotifyProvider({
 			clientId: process.env.SPOTIFY_CLIENT_ID as string,
 			clientSecret: process.env.SPOTIFY_CLIENT_SECRET as string,
 		}),
-		// ...add more providers here
 	],
 	secret: process.env.NEXTAUTH_SECRET,
 	session: {
@@ -20,18 +15,17 @@ export const authOptions = {
 	},
 	jwt: {
 		secret: process.env.NEXTAUTH_SECRET,
-		encryption: true,
 	},
 	callbacks: {
-		jwt: async ({ token, account }) => {
+		async jwt({ token, account }) {
 			if (account) {
 				token.accessToken = account.refresh_token;
 			}
 
 			return token;
 		},
-		session: async ({ session, token }) => {
-			session.token = token;
+		async session({ session, token }) {
+			session.token = token.accessToken as string;
 
 			return session;
 		},
