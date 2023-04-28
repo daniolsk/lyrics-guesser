@@ -3,10 +3,13 @@ import { FormEvent, useState } from 'react';
 import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'] });
 
+import { useSession, signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Loading from '@/components/Loading';
 
 export default function Home() {
+	const { data: session } = useSession();
+
 	const [artist, setArtist] = useState('');
 	const [market, setMarket] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
@@ -20,6 +23,28 @@ export default function Home() {
 
 	return (
 		<div className="flex min-h-[100svh] flex-col justify-between">
+			<header className="flex justify-end p-4 text-sm text-white">
+				{session ? (
+					<>
+						<div>Logged as: {session.user?.name}</div>
+						<button
+							className="cursor-pointer border-2 border-white px-2 py-1 text-sm font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:text-lg"
+							onClick={() => signOut()}
+						>
+							Sign out
+						</button>
+					</>
+				) : (
+					<>
+						<button
+							className="cursor-pointer border-2 border-white px-2 py-1 text-sm font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:text-lg"
+							onClick={() => signIn()}
+						>
+							Sign in
+						</button>
+					</>
+				)}
+			</header>
 			<main className={`flex flex-1 flex-col items-center justify-center p-5 ${inter.className}`}>
 				<div className="mb-2 text-center text-3xl font-semibold">Guess song by lyrics</div>
 				<div className="mb-8 text-center text-base font-semibold">Check how well you know your favorite artist</div>
