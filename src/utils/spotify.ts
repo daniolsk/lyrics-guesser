@@ -3,9 +3,43 @@
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
+export const getUserToken = async (refresh_token) => {
+	const response = await fetch('https://accounts.spotify.com/api/token', {
+		method: 'POST',
+		headers: {
+			Authorization: `Basic ` + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'),
+			'Content-Type': 'application/x-www-form-urlencoded',
+		},
+		body: new URLSearchParams({
+			grant_type: 'refresh_token',
+			refresh_token,
+		}),
+	});
+
+	const data = await response.json();
+
+	return data.access_token;
+};
+
+export const getUsersPlaylists = async (refresh_token) => {
+	const access_token = await getUserToken(refresh_token);
+
+	const response = await fetch('https://api.spotify.com/v1/me/playlists', {
+		headers: {
+			Authorization: `Bearer ${access_token}`,
+		},
+	});
+
+	if (!response.ok) console.error('ERROR: Request failed with status: ' + response.status);
+
+	const data = await response.json();
+
+	return data.items;
+};
+
 export const getToken = async () => {
 	let myHeaders = new Headers();
-	myHeaders.append('Authorization', 'Basic ' + btoa(clientId + ':' + clientSecret));
+	myHeaders.append('Authorization', 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'));
 	myHeaders.append('Content-Type', 'application/x-www-form-urlencoded');
 
 	const urlencoded = new URLSearchParams();

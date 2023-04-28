@@ -1,4 +1,6 @@
-import { FormEvent, useState } from 'react';
+//@ts-nocheck
+import { FormEvent, useEffect, useState } from 'react';
+import Image from 'next/image';
 
 import { Inter } from 'next/font/google';
 const inter = Inter({ subsets: ['latin'] });
@@ -23,26 +25,31 @@ export default function Home() {
 
 	return (
 		<div className="flex min-h-[100svh] flex-col justify-between">
-			<header className="flex justify-end p-4 text-sm text-white">
+			<header className="flex p-4 text-sm text-white">
 				{session ? (
-					<>
-						<div>Logged as: {session.user?.name}</div>
+					<div className="flex flex-1 justify-between">
+						<div className="flex items-center">
+							<div className="mr-4 text-base font-semibold">Hi, {session.user.name}</div>
+							<div className="relative mr-4 h-9 w-9">
+								<Image alt="user avatar" src={session.user.image} fill className="rounded-full object-cover" />
+							</div>
+						</div>
 						<button
 							className="cursor-pointer border-2 border-white px-2 py-1 text-sm font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:text-lg"
 							onClick={() => signOut()}
 						>
 							Sign out
 						</button>
-					</>
+					</div>
 				) : (
-					<>
+					<div className="flex flex-1 justify-end">
 						<button
 							className="cursor-pointer border-2 border-white px-2 py-1 text-sm font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:text-lg"
 							onClick={() => signIn()}
 						>
 							Sign in
 						</button>
-					</>
+					</div>
 				)}
 			</header>
 			<main className={`flex flex-1 flex-col items-center justify-center p-5 ${inter.className}`}>
