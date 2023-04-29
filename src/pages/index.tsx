@@ -8,6 +8,7 @@ const inter = Inter({ subsets: ['latin'] });
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Loading from '@/components/Loading';
+import Footer from '@/components/Footer';
 
 export default function Home() {
 	const { data: session } = useSession();
@@ -97,7 +98,7 @@ export default function Home() {
 				</form>
 				{isLoading ? <Loading /> : ''}
 			</main>
-			<footer className="p-4 text-center text-sm text-white">Made with ❤️ by Daniel Skowron</footer>
+			<Footer />
 		</div>
 	);
 }

@@ -11,6 +11,7 @@ import { getLyrics } from '@/utils/lyrics';
 import { getRandomArtistTrack } from '@/utils/spotify';
 import Loading from '@/components/Loading';
 import { type LyricsObj, type SongObj } from '@/utils/types';
+import Footer from '@/components/Footer';
 
 export default function Guess({ song, error }: { song: SongObj; error?: string }) {
 	const router = useRouter();
@@ -229,12 +230,20 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 										Back
 									</button>
 								</div>
-								<div className="py-4">
+								{isLoading ? (
+									<div className="my-2">
+										<Loading />
+									</div>
+								) : (
+									''
+								)}
+								<div className="mb-2 py-4">
 									<iframe
 										className="rounded-[14px] shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]"
 										src={`https://open.spotify.com/embed/track/${song.id}`}
-										width="100%"
-										height="152"
+										width="310"
+										height="80"
+										frameBorder={0}
 										allowFullScreen={false}
 										allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 										loading="lazy"
@@ -246,10 +255,8 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 						)}
 					</div>
 				)}
-
-				{isLoading ? <Loading /> : ''}
 			</main>
-			<footer className="p-4 text-center text-sm text-white">Made with ❤️ by Daniel Skowron</footer>
+			<Footer />
 		</div>
 	);
 }
