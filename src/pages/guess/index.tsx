@@ -26,7 +26,6 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		setIsGuessed(true);
 
 		const sim = stringSim.compareTwoStrings(guess.toUpperCase(), song.songTitle.toUpperCase());
 
@@ -35,6 +34,8 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 		} else {
 			setIsCorrect(false);
 		}
+
+		setIsGuessed(true);
 	};
 
 	return (
@@ -86,7 +87,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 							</Link>
 						) : (
 							<div
-								className="relative mb-12 mt-4 h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72"
+								className="relative mb-10 mt-4 h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72"
 								onClick={() => setShowImg(true)}
 							>
 								{showImg ? (
@@ -118,7 +119,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 									sizes="(max-width: 640px) 288px, 240px"
 									alt="song image"
 									className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
-										isGuessed || showImg ? `` : `blur-lg grayscale`
+										isGuessed || showImg ? `` : `blur-[14px] grayscale`
 									}`}
 								/>
 							</div>
@@ -131,7 +132,14 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 								{showNextVerses ? '' : '"'}
 							</div>
 							{showNextVerses ? (
-								''
+								<>
+									{song.nextVerses.map((verse, index) => (
+										<div key={index} className="text-base sm:text-lg md:text-xl">
+											{verse}
+											{index == 1 ? '"' : ''}
+										</div>
+									))}
+								</>
 							) : (
 								<button
 									className="mt-2 flex w-full cursor-pointer items-center justify-center fill-gray-300 text-sm text-gray-300 hover:fill-gray-200 hover:text-gray-200 md:text-base"
@@ -153,82 +161,83 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 									<span className="text-inherit">Show next two verses</span>
 								</button>
 							)}
-
-							{showNextVerses ? (
-								<>
-									{song.nextVerses.map((verse, index) => (
-										<div key={index} className="text-base sm:text-lg md:text-xl">
-											{verse}
-											{index == 1 ? '"' : ''}
-										</div>
-									))}
-								</>
-							) : (
-								''
-							)}
 						</div>
-						<form className="flex flex-col items-center" onSubmit={(e) => handleSubmit(e)}>
-							<div className="mb-2">
-								{isGuessed ? (
-									<div className="flex flex-col items-center">
-										<div className="mb-1 text-center text-2xl font-bold md:text-3xl">&quot;{song.songTitle}&quot;</div>
-									</div>
-								) : (
-									<input
-										type="text"
-										className="mb-2 border-b-2 bg-transparent p-2 text-center text-xl font-semibold focus:outline-none  active:outline-none md:text-2xl"
-										value={guess}
-										spellCheck={false}
-										onChange={(e) => setGuess(e.target.value)}
-									/>
-								)}
-								<div className="flex justify-center text-base font-semibold md:text-lg"> by {song.songArtist}</div>
+
+						{isGuessed ? (
+							<div>
+								<div className="flex flex-col items-center">
+									<div className="mb-1 text-center text-2xl font-bold md:text-3xl">&quot;{song.songTitle}&quot;</div>
+									<div className="mb-2 flex justify-center text-base font-semibold md:text-lg"> by {song.songArtist}</div>
+								</div>
 							</div>
-							{isGuessed ? (
-								''
-							) : (
-								<input
-									disabled={isGuessed || guess.length == 0}
-									value="Check"
-									type="submit"
-									className="mb-4 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
-								/>
-							)}
-						</form>
-						{isGuessed && song.previewUrl ? (
-							<button className="text-lg" onClick={toggle}>
-								{playing ? (
-									<Image src="/pause.svg" quality={100} width={40} height={40} alt="pause song" />
-								) : (
-									<Image src="/play.svg" quality={100} width={40} height={40} alt="play song" />
-								)}
-							</button>
 						) : (
-							''
+							<form className="flex flex-col items-center" onSubmit={(e) => handleSubmit(e)}>
+								<input
+									type="text"
+									className="mb-2 border-b-2 bg-transparent p-2 text-center text-2xl font-semibold focus:outline-none active:outline-none md:text-3xl"
+									value={guess}
+									spellCheck={false}
+									onChange={(e) => setGuess(e.target.value)}
+								/>
+								<div className="mb-2 flex justify-center text-base font-semibold md:text-lg"> by {song.songArtist}</div>
+								<div className="flex gap-4">
+									<input
+										disabled={isGuessed || guess.length == 0}
+										value="Check"
+										type="submit"
+										className="mb-4 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+									/>
+									<input
+										value="Give up"
+										type="button"
+										onClick={(e) => {
+											e.preventDefault();
+
+											setIsCorrect(false);
+											setIsGuessed(true);
+										}}
+										className="mb-4 mt-4 cursor-pointer border-2 border-red-600 px-4 py-2 text-lg font-semibold text-red-600 hover:enabled:bg-red-600 hover:enabled:text-black disabled:border-red-900 disabled:text-red-900"
+									/>
+								</div>
+							</form>
 						)}
 						{isGuessed ? (
-							<div className="flex gap-4">
-								<button
-									onClick={() => {
-										setIsLoading(true);
-										router.reload();
-									}}
-									className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
-								>
-									Try again
-								</button>
-								<button
-									onClick={() => router.push('/')}
-									className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
-								>
-									Back
-								</button>
-							</div>
+							<>
+								{song.previewUrl ? (
+									<button className="text-lg" onClick={toggle}>
+										{playing ? (
+											<Image src="/pause.svg" quality={100} width={40} height={40} alt="pause song" />
+										) : (
+											<Image src="/play.svg" quality={100} width={40} height={40} alt="play song" />
+										)}
+									</button>
+								) : (
+									''
+								)}
+								<div className="flex gap-4">
+									<button
+										onClick={() => {
+											setIsLoading(true);
+											router.reload();
+										}}
+										className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+									>
+										Try again
+									</button>
+									<button
+										onClick={() => router.push('/')}
+										className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+									>
+										Back
+									</button>
+								</div>
+							</>
 						) : (
 							''
 						)}
 					</div>
 				)}
+
 				{isLoading ? <Loading /> : ''}
 			</main>
 			<footer className="p-4 text-center text-sm text-white">Made with ❤️ by Daniel Skowron</footer>
