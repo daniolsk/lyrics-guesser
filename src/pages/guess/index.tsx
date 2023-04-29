@@ -79,9 +79,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 										quality={100}
 										sizes="(max-width: 640px) 288px, 240px"
 										alt="song image"
-										className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
-											isGuessed || showImg ? `` : `blur-lg grayscale`
-										}`}
+										className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]`}
 									/>
 								</div>
 							</Link>
@@ -203,7 +201,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 						)}
 						{isGuessed ? (
 							<>
-								{song.previewUrl ? (
+								{/* {song.previewUrl ? (
 									<button className="text-lg" onClick={toggle}>
 										{playing ? (
 											<Image src="/pause.svg" quality={100} width={40} height={40} alt="pause song" />
@@ -213,23 +211,34 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 									</button>
 								) : (
 									''
-								)}
-								<div className="flex gap-4">
+								)} */}
+								<div className="mb-4 flex gap-4">
 									<button
 										onClick={() => {
 											setIsLoading(true);
 											router.reload();
 										}}
-										className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 									>
 										Try again
 									</button>
 									<button
 										onClick={() => router.push('/')}
-										className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 									>
 										Back
 									</button>
+								</div>
+								<div className="py-4">
+									<iframe
+										className="rounded-[14px] shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]"
+										src={`https://open.spotify.com/embed/track/${song.id}`}
+										width="100%"
+										height="152"
+										allowFullScreen={false}
+										allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+										loading="lazy"
+									></iframe>
 								</div>
 							</>
 						) : (
@@ -260,11 +269,11 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 	let market = context.query.market ? (context.query.market as string) : undefined;
 
 	try {
-		const randomSong: { randomTrack: string; previewUrl: string; url: string } = await getRandomArtistTrack(artist, market);
+		const randomSong: { randomTrack: string; previewUrl: string; url: string; id: string } = await getRandomArtistTrack(artist, market);
 
 		let lyricsObj: LyricsObj = await getLyrics(randomSong.randomTrack, artist);
 
-		let songObj: SongObj = { ...lyricsObj, previewUrl: randomSong.previewUrl, url: randomSong.url };
+		let songObj: SongObj = { ...lyricsObj, previewUrl: randomSong.previewUrl, url: randomSong.url, id: randomSong.id };
 
 		return {
 			props: {

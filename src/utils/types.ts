@@ -8,6 +8,7 @@ export type SongObj = {
 	songImageArt: string;
 	previewUrl: string;
 	url: string;
+	id: string;
 };
 
 export type LyricsObj = {
