@@ -55,8 +55,8 @@ export default function Home() {
 					</div>
 				)}
 			</header>
-			<main className={`flex flex-col p-5 ${inter.className}`}>
-				<div className="flex min-h-[80svh] flex-1 flex-col items-center justify-center">
+			<main className={`flex flex-col items-center p-5 ${inter.className}`}>
+				<div className="flex min-h-[85svh] flex-1 flex-col items-center justify-center">
 					<div className="mb-2 text-center text-3xl font-bold sm:text-4xl md:mb-4 md:text-5xl">Guess song by lyrics</div>
 					<div className="mb-8 text-center text-base font-semibold md:text-xl">Check how well you know your favorite artist</div>
 					<form className="mb-4 flex flex-col" onSubmit={(e) => handleSubmit(e)}>
@@ -119,10 +119,10 @@ export default function Home() {
 						/>
 					</svg>
 				</div>
-				<div className="relative mt-4 flex flex-col items-center p-6">
+				<div className="relative mt-4 flex flex-col items-center justify-center p-6 md:p-12">
 					{!session ? (
-						<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center rounded-md bg-black text-center font-bold opacity-95">
-							<button className="p-2 text-gray-300 hover:text-white" onClick={() => signIn()}>
+						<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center rounded-lg text-center text-xl font-bold backdrop-blur-xl md:text-2xl">
+							<button className="p-2 text-gray-200 hover:text-white" onClick={() => signIn()}>
 								Sign in via <span className="text-[#1DB954]">Spotify</span> to unlock more gamemodes
 							</button>
 						</div>
