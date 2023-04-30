@@ -6,12 +6,12 @@ import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import stringSim from 'string-similarity';
 
-import useAudio from '@/components/useAudio';
+import useAudio from '@/components/hooks/useAudio';
 import { getLyrics } from '@/utils/lyrics';
 import { getRandomArtistTrack } from '@/utils/spotify';
-import Loading from '@/components/Loading';
+import Loading from '@/components/ui/Loading';
 import { type LyricsObj, type SongObj } from '@/utils/types';
-import Footer from '@/components/Footer';
+import Footer from '@/components/ui/Footer';
 
 export default function Guess({ song, error }: { song: SongObj; error?: string }) {
 	const router = useRouter();
@@ -65,7 +65,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 						</div>
 					</div>
 				) : (
-					<div className="flex flex-col items-center">
+					<div className="flex w-full flex-col items-center">
 						{isGuessed ? (
 							<Link href={song.url} target="_blank" className="mb-10">
 								<div
@@ -237,13 +237,12 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 								) : (
 									''
 								)}
-								<div className="mb-2 py-4">
+								<div className="mb-2 w-full max-w-sm py-4">
 									<iframe
 										className="rounded-[14px] shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]"
 										src={`https://open.spotify.com/embed/track/${song.id}`}
-										width="310"
+										width="100%"
 										height="80"
-										frameBorder={0}
 										allowFullScreen={false}
 										allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 										loading="lazy"
