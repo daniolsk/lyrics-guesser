@@ -1,5 +1,5 @@
 //@ts-nocheck
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useState } from 'react';
 import Image from 'next/image';
 
 import { Inter } from 'next/font/google';
@@ -58,7 +58,7 @@ export default function Home() {
 			<main className={`flex flex-1 flex-col items-center justify-center p-5 ${inter.className}`}>
 				<div className="mb-2 text-center text-3xl font-bold sm:text-4xl md:mb-4 md:text-5xl">Guess song by lyrics</div>
 				<div className="mb-8 text-center text-base font-semibold md:text-xl">Check how well you know your favorite artist</div>
-				<form className="flex flex-col" onSubmit={(e) => handleSubmit(e)}>
+				<form className="mb-4 flex flex-col" onSubmit={(e) => handleSubmit(e)}>
 					<div className="mb-4 flex items-center justify-center">
 						<input
 							type="text"
@@ -98,6 +98,42 @@ export default function Home() {
 						/>
 					</div>
 				</form>
+				<div className="relative mt-4 p-6">
+					{!session ? (
+						<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center rounded-md bg-black text-center font-bold opacity-95">
+							<button className="p-2 text-gray-300 hover:text-white" onClick={() => signIn()}>
+								Sign in via <span className="text-[#1DB954]">Spotify</span> to unlock more gamemodes
+							</button>
+						</div>
+					) : (
+						''
+					)}
+					<div className="mb-4 flex flex-col text-center text-lg font-semibold">
+						<div>Other gamemodes:</div>
+						<span className="text-sm font-normal text-gray-400">(currently in beta)</span>
+					</div>
+					<div className="m-auto flex flex-col content-center justify-center">
+						<button
+							onClick={() => {
+								setIsLoading(true);
+								router.push(`/guess-from-the-last-listened-artists`);
+							}}
+							className="m-2 block cursor-pointer border-2 border-white px-4 py-2 text-sm font-semibold hover:bg-white hover:text-black md:px-5 md:py-3 md:text-base"
+						>
+							Guess song from one of your last listened artists
+						</button>
+						<button
+							onClick={() => {
+								1;
+								setIsLoading(true);
+								router.push(`/guess-from-the-last-listened-tracks`);
+							}}
+							className="m-2 block cursor-pointer border-2 border-white px-4 py-2 text-sm font-semibold hover:bg-white hover:text-black md:px-5 md:py-3 md:text-base"
+						>
+							Guess song from one of your last listened tracks
+						</button>
+					</div>
+				</div>
 				{isLoading ? (
 					<div className="my-2">
 						<Loading />

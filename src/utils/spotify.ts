@@ -3,7 +3,7 @@
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
-export const getUserToken = async (refresh_token) => {
+export const getUserToken = async (refresh_token: string) => {
 	const response = await fetch('https://accounts.spotify.com/api/token', {
 		method: 'POST',
 		headers: {
@@ -21,7 +21,7 @@ export const getUserToken = async (refresh_token) => {
 	return data.access_token;
 };
 
-export const getUsersPlaylists = async (refresh_token) => {
+export const getUsersPlaylists = async (refresh_token: string) => {
 	const access_token = await getUserToken(refresh_token);
 
 	const response = await fetch('https://api.spotify.com/v1/me/playlists', {
@@ -37,7 +37,39 @@ export const getUsersPlaylists = async (refresh_token) => {
 	return data.items;
 };
 
-export const getToken = async () => {
+export const getPlaylistTracks = async (refresh_token: string, playlistId: string) => {
+	const access_token = await getUserToken(refresh_token);
+
+	const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}?additional_types=track`, {
+		headers: {
+			Authorization: `Bearer ${access_token}`,
+		},
+	});
+
+	if (!response.ok) console.error('ERROR: Request failed with status: ' + response.status);
+
+	const data = await response.json();
+
+	return data.tracks;
+};
+
+export const getUsersTopItems = async (refresh_token: string, type: 'artists' | 'tracks', limit: number) => {
+	const access_token = await getUserToken(refresh_token);
+
+	const response = await fetch(`https://api.spotify.com/v1/me/top/${type}?limit=${limit}&offset=0`, {
+		headers: {
+			Authorization: `Bearer ${access_token}`,
+		},
+	});
+
+	if (!response.ok) console.error('ERROR: Request failed with status: ' + response.status);
+
+	const data = await response.json();
+
+	return data.items;
+};
+
+export const getAppToken = async () => {
 	let myHeaders = new Headers();
 	myHeaders.append('Authorization', 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'));
 	myHeaders.append('Content-Type', 'application/x-www-form-urlencoded');
@@ -59,7 +91,7 @@ export const getToken = async () => {
 };
 
 export const getArtist = async (artistId: string) => {
-	const token = await getToken();
+	const token = await getAppToken();
 
 	const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
 		method: 'GET',
@@ -77,7 +109,7 @@ export const getArtist = async (artistId: string) => {
 };
 
 export const getAllArtistAlbums = async (artistId: string) => {
-	const token = await getToken();
+	const token = await getAppToken();
 
 	const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}/albums?limit=50`, {
 		method: 'GET',
@@ -95,7 +127,7 @@ export const getAllArtistAlbums = async (artistId: string) => {
 };
 
 export const getAlbumTracks = async (albumId: string) => {
-	const token = await getToken();
+	const token = await getAppToken();
 	const response = await fetch(`https://api.spotify.com/v1/albums/${albumId}/tracks`, {
 		method: 'GET',
 		headers: {
@@ -112,7 +144,7 @@ export const getAlbumTracks = async (albumId: string) => {
 };
 
 export const getArtistId = async (artistName: string, market?: string) => {
-	const token = await getToken();
+	const token = await getAppToken();
 	const response = await fetch(
 		`https://api.spotify.com/v1/search?query=${artistName}&type=artist${
 			market ? `&market=${market}` : ''
@@ -134,6 +166,85 @@ export const getArtistId = async (artistName: string, market?: string) => {
 	let artists = data.artists.items;
 
 	return artists[0].id;
+};
+
+export const getRandomSongFromUserLastTracks = async (refresh_token: string) => {
+	let tracks;
+
+	try {
+		tracks = await getUsersTopItems(refresh_token, 'tracks', 50);
+	} catch (error) {
+		throw new Error(`Spotify: error finding tracks`);
+	}
+
+	const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+
+	return {
+		randomTrack: randomTrack.name,
+		previewUrl: randomTrack.preview_url,
+		url: randomTrack.external_urls.spotify,
+		id: randomTrack.id,
+		artist: randomTrack.artists[0].name,
+	};
+};
+
+export const getRandomSongFromUserLastArists = async (refresh_token: string) => {
+	let artistId;
+	let artistName;
+
+	try {
+		let items = await getUsersTopItems(refresh_token, 'artists', 30);
+		let artists: string[] = [];
+
+		for (const artist of items) {
+			artists.push({ name: artist.name, id: artist.id });
+		}
+
+		//console.log(artists);
+
+		let index = Math.floor(Math.random() * artists.length);
+
+		artistId = artists[index].id;
+		artistName = artists[index].name;
+
+		//console.log('PICKED = ', artistName, artistId);
+	} catch (error) {
+		throw new Error(`Spotify: error finding artist`);
+	}
+
+	let albums;
+
+	try {
+		albums = await getAllArtistAlbums(artistId);
+	} catch (error) {
+		throw new Error(`Spotify: artist with id "${artistId}" - albums not found`);
+	}
+
+	albums = albums.items;
+	albums = albums.filter((album) => album.album_type == 'album');
+	albums = albums.filter((album) => album.album_group == 'album');
+
+	const randomAlbum = albums[Math.floor(Math.random() * albums.length)];
+
+	let tracks;
+
+	try {
+		tracks = await getAlbumTracks(randomAlbum.id);
+	} catch (error) {
+		throw new Error(`Spotify: tracks of album ${randomAlbum.name} not found`);
+	}
+
+	tracks = tracks.items;
+
+	const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+
+	return {
+		randomTrack: randomTrack.name,
+		previewUrl: randomTrack.preview_url,
+		url: randomTrack.external_urls.spotify,
+		id: randomTrack.id,
+		artist: artistName,
+	};
 };
 
 export const getRandomArtistTrack = async (artistName: string, market?: string) => {

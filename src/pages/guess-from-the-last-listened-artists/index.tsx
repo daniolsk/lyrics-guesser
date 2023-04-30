@@ -7,10 +7,12 @@ import { GetServerSideProps } from 'next';
 import stringSim from 'string-similarity';
 
 import { getLyrics } from '@/utils/lyrics';
-import { getRandomArtistTrack } from '@/utils/spotify';
+import { getRandomArtistTrack, getRandomSongFromUserLastArists } from '@/utils/spotify';
 import Loading from '@/components/ui/Loading';
 import { type LyricsObj, type SongObj } from '@/utils/types';
 import Footer from '@/components/ui/Footer';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '../api/auth/[...nextauth]';
 
 export default function Guess({ song, error }: { song: SongObj; error?: string }) {
 	const router = useRouter();
@@ -257,24 +259,25 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 	);
 }
 
+//@ts-ignore
 export const getServerSideProps: GetServerSideProps = async (context) => {
-	if (!context.query.artist) {
+	const session = await getServerSession(context.req, context.res, authOptions);
+
+	if (!session) {
 		return {
 			redirect: {
 				destination: '/',
 			},
-			props: {},
 		};
 	}
 
-	let artist = context.query.artist as string;
-
-	let market = context.query.market ? (context.query.market as string) : undefined;
-
 	try {
-		const randomSong: { randomTrack: string; previewUrl: string; url: string; id: string } = await getRandomArtistTrack(artist, market);
+		const randomSong: { randomTrack: string; previewUrl: string; url: string; id: string; artist: string } =
+			await getRandomSongFromUserLastArists(session.token);
 
-		let lyricsObj: LyricsObj = await getLyrics(randomSong.randomTrack, artist);
+		console.log(randomSong.artist, randomSong.randomTrack);
+
+		let lyricsObj: LyricsObj = await getLyrics(randomSong.randomTrack, randomSong.artist);
 
 		let songObj: SongObj = { ...lyricsObj, previewUrl: randomSong.previewUrl, url: randomSong.url, id: randomSong.id };
 
