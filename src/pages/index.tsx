@@ -55,50 +55,71 @@ export default function Home() {
 					</div>
 				)}
 			</header>
-			<main className={`flex flex-1 flex-col items-center justify-center p-5 ${inter.className}`}>
-				<div className="mb-2 text-center text-3xl font-bold sm:text-4xl md:mb-4 md:text-5xl">Guess song by lyrics</div>
-				<div className="mb-8 text-center text-base font-semibold md:text-xl">Check how well you know your favorite artist</div>
-				<form className="mb-4 flex flex-col" onSubmit={(e) => handleSubmit(e)}>
-					<div className="mb-4 flex items-center justify-center">
-						<input
-							type="text"
-							className="border-b-2 bg-transparent p-2 text-center text-lg focus:outline-none active:outline-none md:p-3 md:text-xl"
-							placeholder="Artist name e.g. Eminem"
-							value={artist}
-							onChange={(e) => setArtist(e.target.value)}
-							spellCheck={false}
-						/>
-					</div>
-
-					<input
-						type="submit"
-						disabled={artist.length == 0 || isLoading}
-						className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:px-5 md:py-3 md:text-xl"
-						value={'Start'}
-					/>
-					<div className="mb-4 flex items-center justify-center">
-						<div className="mr-3 text-center text-sm text-gray-400">
-							In case of errors, you can specify
-							<br />
-							the artist&apos;s country code:
+			<main className={`flex flex-col p-5 ${inter.className}`}>
+				<div className="flex min-h-[80svh] flex-1 flex-col items-center justify-center">
+					<div className="mb-2 text-center text-3xl font-bold sm:text-4xl md:mb-4 md:text-5xl">Guess song by lyrics</div>
+					<div className="mb-8 text-center text-base font-semibold md:text-xl">Check how well you know your favorite artist</div>
+					<form className="mb-4 flex flex-col" onSubmit={(e) => handleSubmit(e)}>
+						<div className="mb-4 flex items-center justify-center">
+							<input
+								type="text"
+								className="border-b-2 bg-transparent p-2 text-center text-lg focus:outline-none active:outline-none md:p-3 md:text-xl"
+								placeholder="Artist name e.g. Eminem"
+								value={artist}
+								onChange={(e) => setArtist(e.target.value)}
+								spellCheck={false}
+							/>
 						</div>
+
 						<input
-							type="text"
-							className="w-16 border-b-2 bg-transparent p-2 text-center text-sm focus:outline-none active:outline-none"
-							placeholder="e.g. PL"
-							value={market}
-							onChange={(e) => {
-								if (e.target.value.length <= 2) {
-									setMarket(e.target.value.toUpperCase());
-								} else {
-									return;
-								}
-							}}
-							spellCheck={false}
+							type="submit"
+							disabled={artist.length == 0 || isLoading}
+							className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:px-5 md:py-3 md:text-xl"
+							value={'Start'}
 						/>
-					</div>
-				</form>
-				<div className="relative mt-4 p-6">
+						<div className="mb-4 flex items-center justify-center">
+							<div className="mr-3 text-center text-sm text-gray-400">
+								In case of errors, you can specify
+								<br />
+								the artist&apos;s country code:
+							</div>
+							<input
+								type="text"
+								className="w-16 border-b-2 bg-transparent p-2 text-center text-sm focus:outline-none active:outline-none"
+								placeholder="e.g. PL"
+								value={market}
+								onChange={(e) => {
+									if (e.target.value.length <= 2) {
+										setMarket(e.target.value.toUpperCase());
+									} else {
+										return;
+									}
+								}}
+								spellCheck={false}
+							/>
+						</div>
+					</form>
+					<svg
+						fill="#fff"
+						className="mt-6 h-8 w-8 animate-bounce"
+						height="800px"
+						width="800px"
+						version="1.1"
+						id="Layer_1"
+						xmlns="http://www.w3.org/2000/svg"
+						xmlnsXlink="http://www.w3.org/1999/xlink"
+						viewBox="0 0 330 330"
+						xmlSpace="preserve"
+					>
+						<path
+							id="XMLID_225_"
+							d="M325.607,79.393c-5.857-5.857-15.355-5.858-21.213,0.001l-139.39,139.393L25.607,79.393
+	c-5.857-5.857-15.355-5.858-21.213,0.001c-5.858,5.858-5.858,15.355,0,21.213l150.004,150c2.813,2.813,6.628,4.393,10.606,4.393
+	s7.794-1.581,10.606-4.394l149.996-150C331.465,94.749,331.465,85.251,325.607,79.393z"
+						/>
+					</svg>
+				</div>
+				<div className="relative mt-4 flex flex-col items-center p-6">
 					{!session ? (
 						<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center rounded-md bg-black text-center font-bold opacity-95">
 							<button className="p-2 text-gray-300 hover:text-white" onClick={() => signIn()}>
@@ -124,7 +145,6 @@ export default function Home() {
 						</button>
 						<button
 							onClick={() => {
-								1;
 								setIsLoading(true);
 								router.push(`/guess-from-the-last-listened-tracks`);
 							}}
