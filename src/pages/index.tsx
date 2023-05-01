@@ -1,5 +1,5 @@
 //@ts-nocheck
-import { FormEvent, useState } from 'react';
+import { FormEvent, useRef, useState } from 'react';
 import Image from 'next/image';
 
 import { Inter } from 'next/font/google';
@@ -13,6 +13,8 @@ import Footer from '@/components/ui/Footer';
 export default function Home() {
 	const { data: session } = useSession();
 
+	const ref = useRef(null);
+
 	const [artist, setArtist] = useState('');
 	const [market, setMarket] = useState('');
 	const [isLoading, setIsLoading] = useState(false);
@@ -22,6 +24,10 @@ export default function Home() {
 		e.preventDefault();
 		setIsLoading(true);
 		router.push(`/guess?artist=${artist}${market.length > 0 ? `&market=${market}` : ``}`);
+	};
+
+	const handleClickScroll = () => {
+		ref.current?.scrollIntoView({ behavior: 'smooth' });
 	};
 
 	return (
@@ -100,8 +106,9 @@ export default function Home() {
 						</div>
 					</form>
 					<svg
+						onClick={handleClickScroll}
 						fill="#fff"
-						className="mt-6 h-8 w-8 animate-bounce"
+						className="mt-6 h-8 w-8 animate-bounce cursor-pointer"
 						height="800px"
 						width="800px"
 						version="1.1"
@@ -119,7 +126,7 @@ export default function Home() {
 						/>
 					</svg>
 				</div>
-				<div className="relative mt-4 flex flex-col items-center justify-center p-6 md:p-12">
+				<div className="relative mt-4 flex flex-col items-center justify-center p-6 md:p-12" ref={ref}>
 					{!session ? (
 						<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center rounded-lg text-center text-xl font-bold backdrop-blur-xl md:text-2xl">
 							<button className="p-2 text-gray-200 hover:text-white" onClick={() => signIn()}>
