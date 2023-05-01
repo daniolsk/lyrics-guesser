@@ -1,2 +1,5 @@
-- https://developer.spotify.com/documentation/web-api/reference/get-recently-played
+https://developer.spotify.com/documentation/web-api/reference/get-recently-played
 
+https://developer.spotify.com/documentation/web-api/reference/get-users-saved-albums
+
+https://developer.spotify.com/documentation/web-api/reference/get-users-saved-tracks
