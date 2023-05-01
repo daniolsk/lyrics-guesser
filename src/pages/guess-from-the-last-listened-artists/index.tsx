@@ -259,7 +259,6 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 	);
 }
 
-//@ts-ignore
 export const getServerSideProps: GetServerSideProps = async (context) => {
 	const session = await getServerSession(context.req, context.res, authOptions);
 
@@ -268,6 +267,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 			redirect: {
 				destination: '/',
 			},
+			props: {},
 		};
 	}
 

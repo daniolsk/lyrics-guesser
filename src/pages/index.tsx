@@ -1,4 +1,3 @@
-//@ts-nocheck
 import { FormEvent, useRef, useState } from 'react';
 import Image from 'next/image';
 
@@ -13,7 +12,7 @@ import Footer from '@/components/ui/Footer';
 export default function Home() {
 	const { data: session } = useSession();
 
-	const ref = useRef(null);
+	const ref = useRef<HTMLDivElement>(null);
 
 	const [artist, setArtist] = useState('');
 	const [market, setMarket] = useState('');
