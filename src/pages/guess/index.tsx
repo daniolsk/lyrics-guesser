@@ -9,10 +9,10 @@ import stringSim from 'string-similarity';
 import { getLyrics } from '@/utils/lyrics';
 import { getRandomArtistTrack } from '@/utils/spotify';
 import Loading from '@/components/ui/Loading';
-import { type LyricsObj, type SongObj } from '@/utils/types';
+import { Lyrics, Song } from '@/utils/types';
 import Footer from '@/components/ui/Footer';
 
-export default function Guess({ song, error }: { song: SongObj; error?: string }) {
+export default function Guess({ song, error }: { song: Song; error?: string }) {
 	const router = useRouter();
 
 	const [guess, setGuess] = useState('');
@@ -234,7 +234,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 								) : (
 									''
 								)}
-								<div className="mb-2 w-full max-w-sm py-4">
+								{/* <div className="mb-2 w-full max-w-sm py-4">
 									<iframe
 										className="rounded-[14px] shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]"
 										src={`https://open.spotify.com/embed/track/${song.id}`}
@@ -244,7 +244,7 @@ export default function Guess({ song, error }: { song: SongObj; error?: string }
 										allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
 										loading="lazy"
 									></iframe>
-								</div>
+								</div> */}
 							</>
 						) : (
 							''
@@ -272,23 +272,36 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 	let market = context.query.market ? (context.query.market as string) : undefined;
 
 	try {
-		const randomSong: { randomTrack: string; previewUrl: string; url: string; id: string } = await getRandomArtistTrack(artist, market);
+		let i = 3;
+		let randomSong: { randomTrack: string; previewUrl: string; url: string; id: string };
 
-		let lyricsObj: LyricsObj = await getLyrics(randomSong.randomTrack, artist);
+		let lyricsObj: Lyrics | null;
 
-		let songObj: SongObj = { ...lyricsObj, previewUrl: randomSong.previewUrl, url: randomSong.url, id: randomSong.id };
+		do {
+			randomSong = await getRandomArtistTrack(artist, market);
+
+			lyricsObj = await getLyrics(randomSong.randomTrack, artist);
+
+			i--;
+
+			if (i <= 0) {
+				throw new Error('Lyrics not found!');
+			}
+		} while (!lyricsObj);
+
+		let songObj: Song = { ...lyricsObj, previewUrl: randomSong.previewUrl, url: randomSong.url, id: randomSong.id };
 
 		return {
 			props: {
 				song: songObj,
 			},
 		};
-	} catch (error: any) {
-		console.log(error.message);
+	} catch (error) {
+		console.error(error);
 
 		return {
 			props: {
-				error: error.message,
+				error: 'Something went wrong - try again later',
 			},
 		};
 	}

@@ -7,7 +7,8 @@ export const getLyrics = async (title: string, artist?: string) => {
 	try {
 		songs = await Client.songs.search(title + ' ' + (artist ? artist : ''));
 	} catch (error) {
-		throw new Error(`Genius: lyrics for artist: "${artist}" and track: "${title}" not found`);
+		console.log(`Genius: lyrics for artist: "${artist}" and track: "${title}" not found`);
+		return null;
 	}
 
 	const songTitle = songs[0].title.replace(/(^[\s\u200b]*|[\s\u200b]*$)/g, '');

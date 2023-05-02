@@ -125,40 +125,22 @@ export default function Home() {
 						/>
 					</svg>
 				</div>
-				<div className="relative mt-4 flex flex-col items-center justify-center p-6 md:p-12" ref={ref}>
+				<div className="mt-4 flex flex-col items-center justify-center p-6 md:p-12" ref={ref}>
 					{!session ? (
-						<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center rounded-lg text-center text-xl font-bold backdrop-blur-xl md:text-2xl">
+						<div className="flex items-center justify-center rounded-lg text-center text-xl font-bold md:text-2xl">
 							<button className="p-2 text-gray-200 hover:text-white" onClick={() => signIn()}>
 								Sign in via <span className="text-[#1DB954]">Spotify</span> to unlock more gamemodes
 							</button>
 						</div>
 					) : (
-						''
+						<div>
+							<div className="mb-4 flex flex-col text-center text-3xl font-semibold">
+								<div>Other gamemodes:</div>
+								<span className="text-lg font-normal text-gray-400">(currently in beta)</span>
+							</div>
+							<div className="flex animate-pulse items-center justify-center text-xl">Coming soon...</div>
+						</div>
 					)}
-					<div className="mb-4 flex flex-col text-center text-lg font-semibold">
-						<div>Other gamemodes:</div>
-						<span className="text-sm font-normal text-gray-400">(currently in beta)</span>
-					</div>
-					<div className="m-auto flex flex-col content-center justify-center">
-						<button
-							onClick={() => {
-								setIsLoading(true);
-								router.push(`/guess-from-the-last-listened-artists`);
-							}}
-							className="m-2 block cursor-pointer border-2 border-white px-4 py-2 text-sm font-semibold hover:bg-white hover:text-black md:px-5 md:py-3 md:text-base"
-						>
-							Guess song from one of your last listened artists
-						</button>
-						<button
-							onClick={() => {
-								setIsLoading(true);
-								router.push(`/guess-from-the-last-listened-tracks`);
-							}}
-							className="m-2 block cursor-pointer border-2 border-white px-4 py-2 text-sm font-semibold hover:bg-white hover:text-black md:px-5 md:py-3 md:text-base"
-						>
-							Guess song from one of your last listened tracks
-						</button>
-					</div>
 				</div>
 				{isLoading ? (
 					<div className="my-2">
