@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import { FormEvent, useEffect, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
@@ -15,12 +15,30 @@ import Footer from '@/components/ui/Footer';
 export default function Guess({ song, error }: { song: Song; error?: string }) {
 	const router = useRouter();
 
+	const [time, setTime] = useState(5);
+	const [allowNext, setAllowNext] = useState(false);
 	const [guess, setGuess] = useState('');
 	const [isGuessed, setIsGuessed] = useState(false);
 	const [isCorrect, setIsCorrect] = useState<Boolean>();
 	const [isLoading, setIsLoading] = useState(false);
 	const [showImg, setShowImg] = useState(false);
 	const [showNextVerses, setShowNextVerses] = useState(false);
+
+	useEffect(() => {
+		let i = setInterval(() => {
+			setTime((time) => {
+				if (time - 1 <= 0) {
+					clearInterval(i);
+					setAllowNext(true);
+				}
+				return time - 1;
+			});
+		}, 1000);
+
+		return () => {
+			clearInterval(i);
+		};
+	}, []);
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
@@ -212,13 +230,14 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 								)} */}
 								<div className="mb-4 flex gap-4">
 									<button
+										disabled={!allowNext}
 										onClick={() => {
 											setIsLoading(true);
 											router.reload();
 										}}
 										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 									>
-										Try again
+										Try again {time > 0 ? `(${time})` : ''}
 									</button>
 									<button
 										onClick={() => router.push('/')}
