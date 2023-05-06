@@ -7,7 +7,7 @@ import NextNProgress from 'nextjs-progressbar';
 export default function App({ Component, pageProps: { session, ...pageProps } }: AppProps) {
 	return (
 		<SessionProvider session={session}>
-			<NextNProgress color="#dc2626" height={3} showOnShallow={true} />
+			<NextNProgress color="#dc2626" height={3} showOnShallow={true} options={{ showSpinner: false }} />
 			<Component {...pageProps} />
 		</SessionProvider>
 	);

@@ -64,7 +64,7 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 							<button
 								onClick={() => {
 									setIsLoading(true);
-									router.push(router.asPath);
+									router.reload();
 								}}
 								className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 							>
@@ -239,7 +239,7 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 										disabled={!allowNext}
 										onClick={() => {
 											setIsLoading(true);
-											router.push(router.asPath);
+											router.reload();
 										}}
 										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 									>

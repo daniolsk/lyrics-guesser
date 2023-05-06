@@ -61,8 +61,11 @@ export default function Home() {
 			</header>
 			<main className={`flex flex-col items-center p-5 ${inter.className}`}>
 				<div className="flex min-h-[85svh] flex-1 flex-col items-center justify-center">
-					<div className="background-animate mb-2 bg-gradient-to-r from-red-500 to-green-500 bg-clip-text p-1 text-center text-4xl font-extrabold tracking-wide text-transparent sm:text-4xl md:mb-4 md:text-6xl">
-						Guess the song
+					<div className="mb-2 p-1 text-center text-4xl font-extrabold tracking-wide text-white sm:text-4xl md:mb-4 md:text-6xl">
+						Guess the{' '}
+						<span className="background-animate bg-gradient-to-r from-red-400  to-green-400 bg-clip-text text-transparent">
+							song
+						</span>
 					</div>
 					<div className="mb-8 text-center text-base font-semibold md:text-xl">Check how well you know your favorite artist</div>
 					<form className="mb-4 flex flex-col" onSubmit={(e) => handleSubmit(e)}>
