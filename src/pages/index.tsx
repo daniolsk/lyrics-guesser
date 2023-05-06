@@ -6,7 +6,6 @@ const inter = Inter({ subsets: ['latin'] });
 
 import { useSession, signIn, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
-import Loading from '@/components/ui/Loading';
 import Footer from '@/components/ui/Footer';
 
 export default function Home() {
@@ -142,13 +141,6 @@ export default function Home() {
 						</div>
 					)}
 				</div>
-				{isLoading ? (
-					<div className="my-2">
-						<Loading />
-					</div>
-				) : (
-					''
-				)}
 			</main>
 			<Footer />
 		</div>

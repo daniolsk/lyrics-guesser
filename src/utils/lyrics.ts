@@ -12,9 +12,9 @@ export const getLyrics = async (title: string, artist?: string) => {
 	}
 
 	const songTitle = songs[0].title.replace(/(^[\s\u200b]*|[\s\u200b]*$)/g, '');
-	const songImageArt = songs[0].raw.song_art_image_url;
-	const songImage = songs[0].image;
+	const songImage = songs[0].raw.song_art_image_url;
 	const songArtist = songs[0].artist.name;
+	const songArtistNames = songs[0].raw.artist_names;
 
 	const lyrics = await songs[0].lyrics();
 	const lyricsArray = lyrics.split('\n').filter((l: string) => l.length && l[0] !== '[');
@@ -27,6 +27,6 @@ export const getLyrics = async (title: string, artist?: string) => {
 		songTitle,
 		songImage,
 		songArtist,
-		songImageArt,
+		songArtistNames,
 	};
 };

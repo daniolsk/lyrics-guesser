@@ -8,7 +8,6 @@ import stringSim from 'string-similarity';
 
 import { getLyrics } from '@/utils/lyrics';
 import { getRandomArtistTrack } from '@/utils/spotify';
-import Loading from '@/components/ui/Loading';
 import { Lyrics, Song } from '@/utils/types';
 import Footer from '@/components/ui/Footer';
 
@@ -65,7 +64,7 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 							<button
 								onClick={() => {
 									setIsLoading(true);
-									router.reload();
+									router.push(router.asPath);
 								}}
 								className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 							>
@@ -82,7 +81,7 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 				) : (
 					<div className="flex w-full flex-col items-center">
 						{isGuessed ? (
-							<Link href={song.url} target="_blank" className="mb-10">
+							<Link href={song.url} target="_blank" className="mb-10 mt-4 ">
 								<div
 									className="relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72"
 									onClick={() => setShowImg(true)}
@@ -90,24 +89,23 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 									<Image
 										fill
 										onContextMenu={(e) => e.preventDefault()}
-										src={song.songImageArt ? song.songImageArt : song.songImage}
+										src={song.songImage}
 										priority
 										quality={100}
-										sizes="(max-width: 640px) 288px, 240px"
+										sizes="(max-width: 768px) 100vw,
+										(max-width: 1200px) 50vw,
+										33vw"
 										alt="song image"
 										className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]`}
 									/>
 								</div>
 							</Link>
 						) : (
-							<div
-								className="relative mb-10 mt-4 h-60 w-60 cursor-pointer p-4 sm:h-72 sm:w-72"
-								onClick={() => setShowImg(true)}
-							>
+							<div className="relative mb-10 mt-4 h-60 w-60 p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
 								{showImg ? (
 									''
 								) : (
-									<div className="absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center bg-transparent fill-gray-300 font-semibold text-gray-300 hover:fill-gray-100 hover:text-gray-100 md:text-base">
+									<div className=" absolute left-0 top-0 z-10 flex h-full w-full cursor-pointer items-center justify-center bg-transparent fill-gray-300 font-semibold text-gray-300 hover:fill-gray-100 hover:text-gray-100 md:text-base">
 										<svg
 											width="20px"
 											height="20px"
@@ -127,10 +125,12 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 								<Image
 									fill
 									onContextMenu={(e) => e.preventDefault()}
-									src={song.songImageArt ? song.songImageArt : song.songImage}
+									src={song.songImage}
 									priority
 									quality={100}
-									sizes="(max-width: 640px) 288px, 240px"
+									sizes="(max-width: 768px) 100vw,
+									(max-width: 1200px) 50vw,
+									33vw"
 									alt="song image"
 									className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
 										isGuessed || showImg ? `` : `blur-[14px] grayscale`
@@ -179,9 +179,12 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 
 						{isGuessed ? (
 							<div>
-								<div className="flex flex-col items-center">
-									<div className="mb-1 text-center text-2xl font-bold md:text-3xl">&quot;{song.songTitle}&quot;</div>
-									<div className="mb-2 flex justify-center text-base font-semibold md:text-lg"> by {song.songArtist}</div>
+								<div className="my-2 flex flex-col items-center">
+									<div className="mb-1 text-center text-3xl font-bold md:text-4xl">&quot;{song.songTitle}&quot;</div>
+									<div className="mb-2 flex justify-center text-base font-semibold md:text-lg">
+										{' '}
+										by {song.songArtistNames ? song.songArtistNames : song.songArtist}
+									</div>
 								</div>
 							</div>
 						) : (
@@ -193,7 +196,10 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 									spellCheck={false}
 									onChange={(e) => setGuess(e.target.value)}
 								/>
-								<div className="mb-2 flex justify-center text-base font-semibold md:text-lg"> by {song.songArtist}</div>
+								<div className="mb-2 flex justify-center text-base font-semibold md:text-lg">
+									{' '}
+									by {song.songArtistNames ? song.songArtistNames : song.songArtist}
+								</div>
 								<div className="flex gap-4">
 									<input
 										disabled={isGuessed || guess.length == 0}
@@ -233,7 +239,7 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 										disabled={!allowNext}
 										onClick={() => {
 											setIsLoading(true);
-											router.reload();
+											router.push(router.asPath);
 										}}
 										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 									>
@@ -246,13 +252,6 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 										Back
 									</button>
 								</div>
-								{isLoading ? (
-									<div className="my-2">
-										<Loading />
-									</div>
-								) : (
-									''
-								)}
 								{/* <div className="mb-2 w-full max-w-sm py-4">
 									<iframe
 										className="rounded-[14px] shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]"

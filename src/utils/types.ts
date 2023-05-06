@@ -11,5 +11,5 @@ export type Lyrics = {
 	songTitle: string;
 	songImage: string;
 	songArtist: string;
-	songImageArt: string;
+	songArtistNames: string;
 };
