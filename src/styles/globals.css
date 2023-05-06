@@ -11,3 +11,23 @@ body {
 	color: white;
 	background: #070606;
 }
+
+.background-animate {
+	background-size: 250%;
+
+	-webkit-animation: BackgroundScroll 12s ease-in-out infinite;
+	-moz-animation: BackgroundScroll 12s ease-in-out infinite;
+	animation: BackgroundScroll 12s ease-in-out infinite;
+}
+
+@keyframes BackgroundScroll {
+	0%,
+	100% {
+		background-size: 500%;
+		background-position: left center;
+	}
+	50% {
+		background-size: 500%;
+		background-position: right center;
+	}
+}

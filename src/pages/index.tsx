@@ -61,7 +61,9 @@ export default function Home() {
 			</header>
 			<main className={`flex flex-col items-center p-5 ${inter.className}`}>
 				<div className="flex min-h-[85svh] flex-1 flex-col items-center justify-center">
-					<div className="mb-2 text-center text-3xl font-bold sm:text-4xl md:mb-4 md:text-5xl">Guess song by lyrics</div>
+					<div className="background-animate mb-2 bg-gradient-to-r from-red-500 to-green-500 bg-clip-text p-1 text-center text-4xl font-extrabold tracking-wide text-transparent sm:text-4xl md:mb-4 md:text-6xl">
+						Guess the song
+					</div>
 					<div className="mb-8 text-center text-base font-semibold md:text-xl">Check how well you know your favorite artist</div>
 					<form className="mb-4 flex flex-col" onSubmit={(e) => handleSubmit(e)}>
 						<div className="mb-4 flex items-center justify-center">
@@ -137,7 +139,7 @@ export default function Home() {
 								<div>Other gamemodes:</div>
 								<span className="text-lg font-normal text-gray-400">(currently in beta)</span>
 							</div>
-							<div className="flex animate-pulse items-center justify-center text-xl">Coming soon...</div>
+							<div className="flex items-center justify-center text-xl">Coming soon...</div>
 						</div>
 					)}
 				</div>
