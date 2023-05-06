@@ -61,7 +61,7 @@ export default function Home() {
 			</header>
 			<main className={`flex flex-col items-center p-5 ${inter.className}`}>
 				<div className="flex min-h-[85svh] flex-1 flex-col items-center justify-center">
-					<div className="mb-2 p-1 text-center text-4xl font-extrabold tracking-wide text-white sm:text-4xl md:mb-4 md:text-6xl">
+					<div className="mb-2 p-1 text-center text-4xl font-extrabold tracking-wide text-white md:mb-4 md:text-6xl">
 						Guess the{' '}
 						<span className="background-animate bg-gradient-to-r from-red-400  to-green-400 bg-clip-text text-transparent">
 							song
@@ -72,7 +72,7 @@ export default function Home() {
 						<div className="mb-4 flex items-center justify-center">
 							<input
 								type="text"
-								className="border-b-2 bg-transparent p-2 text-center text-lg focus:outline-none active:outline-none md:p-3 md:text-xl"
+								className="border-b-2 bg-transparent p-2 text-center text-lg font-semibold focus:outline-none active:outline-none md:p-3 md:text-xl"
 								placeholder="Artist name e.g. Eminem"
 								value={artist}
 								onChange={(e) => setArtist(e.target.value)}
