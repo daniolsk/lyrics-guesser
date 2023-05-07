@@ -10,6 +10,7 @@ import { getLyrics } from '@/utils/lyrics';
 import { getRandomArtistTrack } from '@/utils/spotify';
 import { Lyrics, Song } from '@/utils/types';
 import Footer from '@/components/ui/Footer';
+import Loading from '@/components/ui/Loading';
 
 export default function Guess({ song, error }: { song: Song; error?: string }) {
 	const router = useRouter();
@@ -54,7 +55,11 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 	};
 
 	return (
-		<div className={`flex min-h-[100svh] flex-col justify-between ${isGuessed ? `${isCorrect ? 'bg-green-900' : 'bg-red-900'}` : ''}`}>
+		<div
+			className={`flex min-h-[100svh] flex-col justify-between bg-[url('https://ping.gg/_next/static/media/background.d5ba1ba2.svg')] bg-[length:120rem] bg-top bg-no-repeat ${
+				isGuessed ? `${isCorrect ? 'bg-green-1000' : 'bg-red-1000'}` : ''
+			}`}
+		>
 			<main className="flex flex-1 flex-col items-center justify-center p-5 pb-0">
 				{error ? (
 					<div className="flex flex-col items-center">
@@ -81,7 +86,7 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 				) : (
 					<div className="flex w-full flex-col items-center">
 						{isGuessed ? (
-							<Link href={song.url} target="_blank" className="mb-10 mt-4 ">
+							<Link href={song.url} target="_blank" className="mb-10 mt-4 bg-gray-1000">
 								<div
 									className="relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72"
 									onClick={() => setShowImg(true)}
@@ -101,7 +106,10 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 								</div>
 							</Link>
 						) : (
-							<div className="relative mb-10 mt-4 h-60 w-60 p-4 sm:h-72 sm:w-72" onClick={() => setShowImg(true)}>
+							<div
+								className="relative mb-10 mt-4 h-60 w-60 bg-gray-1000 p-4 sm:h-72 sm:w-72"
+								onClick={() => setShowImg(true)}
+							>
 								{showImg ? (
 									''
 								) : (
@@ -205,7 +213,7 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 										disabled={isGuessed || guess.length == 0}
 										value="Check"
 										type="submit"
-										className="mb-4 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+										className="mb-4 mt-4 cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-400 disabled:text-gray-400"
 									/>
 									<input
 										value="Give up"
@@ -216,7 +224,7 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 											setIsCorrect(false);
 											setIsGuessed(true);
 										}}
-										className="mb-4 mt-4 cursor-pointer border-2 border-red-600 px-4 py-2 text-lg font-semibold text-red-600 hover:enabled:bg-red-600 hover:enabled:text-black disabled:border-red-900 disabled:text-red-900"
+										className="mb-4 mt-4 cursor-pointer border-2 border-red-600 bg-gray-1000 px-4 py-2 text-lg font-semibold text-red-600 hover:enabled:bg-red-600 hover:enabled:text-black disabled:border-red-900 disabled:text-red-900"
 									/>
 								</div>
 							</form>

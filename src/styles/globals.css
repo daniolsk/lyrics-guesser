@@ -9,7 +9,7 @@
 
 body {
 	color: white;
-	background: #070606;
+	@apply bg-gray-1000;
 }
 
 .background-animate {
