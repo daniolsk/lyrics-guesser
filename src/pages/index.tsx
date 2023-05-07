@@ -87,7 +87,7 @@ export default function Home() {
 							<button
 								type="submit"
 								disabled={artist.length == 0 || isLoading}
-								className="mb-8 mt-4 cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:px-5 md:py-3 md:text-xl"
+								className="mb-8 mt-4 w-full max-w-md cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:px-5 md:py-3 md:text-xl"
 							>
 								{!isLoading ? (
 									'Start'
