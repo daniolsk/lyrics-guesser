@@ -244,18 +244,18 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 								)} */}
 								<div className="mb-4 flex gap-4">
 									<button
-										disabled={!allowNext}
+										disabled={!allowNext || isLoading}
 										onClick={() => {
 											setIsLoading(true);
 											router.reload();
 										}}
-										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-400 disabled:text-gray-400"
 									>
 										Try again {time > 0 ? `(${time})` : ''}
 									</button>
 									<button
 										onClick={() => router.push('/')}
-										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-400 disabled:text-gray-400"
 									>
 										Back
 									</button>
