@@ -29,7 +29,7 @@ export default function Home() {
 	};
 
 	return (
-		<div className="h-screen bg-[url('https://ping.gg/_next/static/media/background.d5ba1ba2.svg')] bg-[length:120rem] bg-top bg-no-repeat">
+		<div className="bg-[url('/bg.svg')] bg-[length:160rem] bg-top bg-repeat">
 			<div className="m-auto flex min-h-[100svh] max-w-7xl flex-col justify-between">
 				<header className="flex p-4 text-sm text-white md:p-5">
 					{session ? (

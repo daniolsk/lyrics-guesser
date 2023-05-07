@@ -56,7 +56,7 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 
 	return (
 		<div
-			className={`flex min-h-[100svh] flex-col justify-between bg-[url('https://ping.gg/_next/static/media/background.d5ba1ba2.svg')] bg-[length:120rem] bg-top bg-no-repeat ${
+			className={`length:160rem flex min-h-[100svh] flex-col justify-between bg-[url('/bg.svg')] bg-top bg-repeat ${
 				isGuessed ? `${isCorrect ? 'bg-green-1000' : 'bg-red-1000'}` : ''
 			}`}
 		>
