@@ -16,7 +16,7 @@ export default function Home() {
 
 	const [artist, setArtist] = useState('');
 	const [market, setMarket] = useState('');
-	const [isLoading, setIsLoading] = useState(true);
+	const [isLoading, setIsLoading] = useState(false);
 	const router = useRouter();
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
