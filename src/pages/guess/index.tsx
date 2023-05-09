@@ -85,6 +85,21 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 					</div>
 				) : (
 					<div className="flex w-full flex-col items-center">
+						<div className="mb-6 hidden items-center justify-center md:flex ">
+							<svg width="28px" height="28px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+								<g id="Warning / Info">
+									<path
+										id="Vector"
+										d="M12 11V16M12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21ZM12.0498 8V8.1L11.9502 8.1002V8H12.0498Z"
+										stroke="#fff"
+										stroke-width="2"
+										stroke-linecap="round"
+										stroke-linejoin="round"
+									/>
+								</g>
+							</svg>
+							<h1 className="ml-2 text-2xl font-semibold">Guess the song title</h1>
+						</div>
 						{isGuessed ? (
 							<Link href={song.url} target="_blank" className="mb-10 mt-4 bg-gray-1000">
 								<div
@@ -146,7 +161,6 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 								/>
 							</div>
 						)}
-
 						<div className="mb-6 text-center font-semibold italic">
 							<div className="text-base sm:text-lg md:text-xl">&quot;{song.firstVerse}</div>
 							<div className="text-base sm:text-lg md:text-xl">
@@ -184,7 +198,6 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 								</button>
 							)}
 						</div>
-
 						{isGuessed ? (
 							<div>
 								<div className="my-2 flex flex-col items-center">
@@ -231,17 +244,6 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 						)}
 						{isGuessed ? (
 							<>
-								{/* {song.previewUrl ? (
-									<button className="text-lg" onClick={toggle}>
-										{playing ? (
-											<Image src="/pause.svg" quality={100} width={40} height={40} alt="pause song" />
-										) : (
-											<Image src="/play.svg" quality={100} width={40} height={40} alt="play song" />
-										)}
-									</button>
-								) : (
-									''
-								)} */}
 								<div className="mb-4 flex gap-4">
 									<button
 										disabled={!allowNext || isLoading}
@@ -260,17 +262,6 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 										Back
 									</button>
 								</div>
-								{/* <div className="mb-2 w-full max-w-sm py-4">
-									<iframe
-										className="rounded-[14px] shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]"
-										src={`https://open.spotify.com/embed/track/${song.id}`}
-										width="100%"
-										height="80"
-										allowFullScreen={false}
-										allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-										loading="lazy"
-									></iframe>
-								</div> */}
 							</>
 						) : (
 							''

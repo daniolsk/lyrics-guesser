@@ -63,9 +63,9 @@ export default function Home() {
 				</header>
 				<main className={`flex flex-col items-center p-5 ${inter.className}`}>
 					<div className="flex min-h-[85svh] flex-1 flex-col items-center justify-center">
-						<div className="mb-2 text-center text-4xl font-extrabold tracking-wide text-white md:mb-4 md:text-6xl">
-							Guess the{' '}
-							<span className="background-animate bg-gradient-to-r from-red-400 to-green-400 bg-clip-text text-transparent">
+						<div className="mb-2 flex text-center text-4xl font-extrabold tracking-wide text-white md:mb-4 md:text-6xl">
+							<span className="py-2">Guess the&nbsp;</span>
+							<span className="background-animate bg-gradient-to-r from-red-400 to-green-400 bg-clip-text py-2 text-transparent">
 								song
 							</span>
 						</div>
