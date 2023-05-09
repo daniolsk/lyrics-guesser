@@ -5,12 +5,12 @@ import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { GetServerSideProps } from 'next';
 import stringSim from 'string-similarity';
+import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
 
 import { getLyrics } from '@/utils/lyrics';
 import { getRandomArtistTrack } from '@/utils/spotify';
 import { Lyrics, Song } from '@/utils/types';
 import Footer from '@/components/ui/Footer';
-import Loading from '@/components/ui/Loading';
 
 export default function Guess({ song, error }: { song: Song; error?: string }) {
 	const router = useRouter();
@@ -86,19 +86,10 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 				) : (
 					<div className="flex w-full flex-col items-center">
 						<div className="mb-6 hidden items-center justify-center md:flex ">
-							<svg width="28px" height="28px" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-								<g id="Warning / Info">
-									<path
-										id="Vector"
-										d="M12 11V16M12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12C21 16.9706 16.9706 21 12 21ZM12.0498 8V8.1L11.9502 8.1002V8H12.0498Z"
-										stroke="#fff"
-										stroke-width="2"
-										stroke-linecap="round"
-										stroke-linejoin="round"
-									/>
-								</g>
-							</svg>
-							<h1 className="ml-2 text-2xl font-semibold">Guess the song title</h1>
+							<h1 className="ml-2 flex items-center text-2xl font-semibold">
+								<AiOutlineInfoCircle className="mr-2" size={28} />
+								Guess the song title
+							</h1>
 						</div>
 						{isGuessed ? (
 							<Link href={song.url} target="_blank" className="mb-10 mt-4 bg-gray-1000">
@@ -129,20 +120,10 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 									''
 								) : (
 									<div className=" absolute left-0 top-0 z-10 flex h-full w-full cursor-pointer items-center justify-center bg-transparent fill-gray-300 font-semibold text-gray-300 hover:fill-gray-100 hover:text-gray-100 md:text-base">
-										<svg
-											width="20px"
-											height="20px"
-											viewBox="0 0 24 24"
-											fill="none"
-											xmlns="http://www.w3.org/2000/svg"
-											className="mr-1 fill-inherit drop-shadow-[2px_5px_5px_rgb(0,0,0)]"
-										>
-											<path
-												className="fill-inherit"
-												d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zM7.92 9.234v.102a.5.5 0 0 0 .5.5h.997a.499.499 0 0 0 .499-.499c0-1.29.998-1.979 2.34-1.979 1.308 0 2.168.689 2.168 1.67 0 .928-.482 1.359-1.686 1.91l-.344.154C11.379 11.54 11 12.21 11 13.381v.119a.5.5 0 0 0 .5.5h.997a.499.499 0 0 0 .499-.499c0-.516.138-.723.55-.912l.345-.155c1.445-.654 2.529-1.514 2.529-3.39v-.103c0-1.978-1.72-3.441-4.164-3.441-2.478 0-4.336 1.428-4.336 3.734zm2.58 7.757c0 .867.659 1.509 1.491 1.509.85 0 1.509-.642 1.509-1.509 0-.867-.659-1.491-1.509-1.491-.832 0-1.491.624-1.491 1.491z"
-											/>
-										</svg>
-										<div className="text-inherit drop-shadow-[2px_5px_5px_rgb(0,0,0)]">Show image</div>
+										<div className="flex items-center text-inherit drop-shadow-[2px_5px_5px_rgb(0,0,0)]">
+											<AiFillQuestionCircle className="mr-2 fill-inherit" size={18} />
+											Show image
+										</div>
 									</div>
 								)}
 								<Image
@@ -181,20 +162,10 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 									className="mt-2 flex w-full cursor-pointer items-center justify-center fill-gray-300 text-sm text-gray-300 hover:fill-gray-200 hover:text-gray-200 md:text-base"
 									onClick={() => setShowNextVerses(true)}
 								>
-									<svg
-										width="20px"
-										height="20px"
-										viewBox="0 0 24 24"
-										fill="none"
-										xmlns="http://www.w3.org/2000/svg"
-										className="mr-1 fill-inherit"
-									>
-										<path
-											className="fill-inherit"
-											d="M12 22C6.477 22 2 17.523 2 12S6.477 2 12 2s10 4.477 10 10-4.477 10-10 10zM7.92 9.234v.102a.5.5 0 0 0 .5.5h.997a.499.499 0 0 0 .499-.499c0-1.29.998-1.979 2.34-1.979 1.308 0 2.168.689 2.168 1.67 0 .928-.482 1.359-1.686 1.91l-.344.154C11.379 11.54 11 12.21 11 13.381v.119a.5.5 0 0 0 .5.5h.997a.499.499 0 0 0 .499-.499c0-.516.138-.723.55-.912l.345-.155c1.445-.654 2.529-1.514 2.529-3.39v-.103c0-1.978-1.72-3.441-4.164-3.441-2.478 0-4.336 1.428-4.336 3.734zm2.58 7.757c0 .867.659 1.509 1.491 1.509.85 0 1.509-.642 1.509-1.509 0-.867-.659-1.491-1.509-1.491-.832 0-1.491.624-1.491 1.491z"
-										/>
-									</svg>
-									<span className="text-inherit">Show next two verses</span>
+									<span className="flex items-center text-inherit">
+										<AiFillQuestionCircle className="mr-2 fill-inherit" size={18} />
+										Show next two verses
+									</span>
 								</button>
 							)}
 						</div>
