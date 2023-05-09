@@ -19,7 +19,7 @@ const Loading = ({ noText }: { noText?: boolean }) => {
 	return (
 		<div className="flex flex-col items-center">
 			<svg
-				className={`-ml-1 ${noText ? '' : 'mb-2'} h-6 w-6 animate-spin text-white`}
+				className={`${noText ? '' : 'mb-2'} h-6 w-6 animate-spin text-white`}
 				xmlns="http://www.w3.org/2000/svg"
 				fill="none"
 				viewBox="0 0 24 24"

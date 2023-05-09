@@ -12,6 +12,8 @@ import Loading from '@/components/ui/Loading';
 import { BsMusicNoteBeamed, BsFillPersonFill, BsFillDice5Fill } from 'react-icons/bs';
 import { BiAlbum } from 'react-icons/bi';
 import { MdOutlineLyrics } from 'react-icons/md';
+import Link from 'next/link';
+import LoadingFullScreen from '@/components/ui/LoadingFullScreen';
 
 export default function Home() {
 	const { data: session } = useSession();
@@ -35,6 +37,7 @@ export default function Home() {
 
 	return (
 		<div className="bg-[url('/bg.svg')] bg-[length:160rem] bg-top bg-repeat">
+			<LoadingFullScreen show={isLoading} />
 			<div className="m-auto flex min-h-[100svh] max-w-7xl flex-col justify-between">
 				<header className="flex p-4 text-sm text-white md:p-5">
 					{session ? (
@@ -70,7 +73,7 @@ export default function Home() {
 						<div className="mb-2 flex text-center text-4xl font-extrabold tracking-wide text-white md:mb-4 md:text-6xl">
 							<span className="py-2">Guess the&nbsp;</span>
 							<span className="background-animate bg-gradient-to-r from-red-400 to-green-400 bg-clip-text py-2 text-transparent">
-								song
+								Song
 							</span>
 						</div>
 						<div className="mb-8 text-center text-base font-normal md:text-xl">
@@ -145,78 +148,88 @@ export default function Home() {
 						</svg>
 					</div>
 					<div className="mt-10 flex flex-col items-center justify-center" ref={ref}>
-						{!session ? (
-							<button
-								onClick={() => signIn()}
-								className="flex items-center justify-center rounded-lg p-2 text-center text-xl font-bold text-gray-200 hover:text-white md:text-2xl"
-							>
-								Sign in via&nbsp;<span className="text-[#1DB954]">Spotify</span>&nbsp;to unlock more gamemodes
-							</button>
-						) : (
-							<div className="flex flex-col text-center text-2xl">
-								<div className="mb-1 text-2xl font-semibold md:text-3xl">Other gamemodes:</div>
-								<div className="mb-12 text-sm font-semibold text-gray-300 md:text-base">
+						<div className="flex flex-col text-center text-2xl">
+							<div className="mb-1 text-2xl font-semibold md:text-3xl">Other gamemodes:</div>
+							<div className="mb-12 flex flex-col items-center justify-center">
+								<div className=" text-sm font-semibold text-gray-300 md:text-base">
 									(songs are generated based on your Spotify)
 								</div>
-								<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
-									<div className="p-4">
-										<div className="mb-2 flex items-center justify-center text-xl font-semibold">
-											<BsMusicNoteBeamed className="mr-2" />
-											Guess The Song
-										</div>
-										<div className="text-center text-sm text-gray-300 md:text-base">
-											In this game, you&apos;ll be given a set of lyrics from a song and an image that might be
-											related to the song or its music video. Your task is to guess the title of the song based on
-											these clues. The more correct answers you get, the more points you&apos;ll score.
-										</div>
+								{session ? (
+									''
+								) : (
+									<button
+										onClick={() => signIn()}
+										className="mt-4 flex items-center justify-center rounded-lg p-2 text-center text-xl font-bold text-gray-300 hover:text-white md:text-2xl"
+									>
+										Sign in with&nbsp;<span className="text-[#1DB954]">Spotify</span>
+									</button>
+								)}
+							</div>
+							<div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+								<div className="p-4">
+									<div
+										onClick={() => {
+											setIsLoading(true);
+											router.push('/gamemode/guess-the-song');
+										}}
+										className="mb-2 flex cursor-pointer items-center justify-center text-xl font-semibold hover:underline"
+									>
+										<BsMusicNoteBeamed className="mr-2" />
+										Guess the Song
 									</div>
-									<div className="p-4">
-										<div className="mb-2 flex items-center justify-center text-xl font-semibold">
-											<BiAlbum className="mr-2" /> Name The Album
-										</div>
-										<div className="text-center text-sm text-gray-300 md:text-base">
-											You&apos;ll be presented with a list of song titles from a specific music album, along with an
-											image that might be related to the album or its cover art. Your goal is to guess the name of the
-											album based on these clues. The more correct answers you get, the more points you&apos;ll earn.
-										</div>
+									<div className="text-center text-sm text-gray-300 md:text-base">
+										In this game, you&apos;ll be given a set of lyrics from a song and an image that might be related to
+										the song or its music video. Your task is to guess the title of the song based on these clues. The
+										more correct answers you get, the more points you&apos;ll score.
 									</div>
-									<div className="p-4">
-										<div className="mb-2 flex items-center justify-center text-xl font-semibold">
-											<BsFillPersonFill className="mr-2" />
-											Guess The Artist
-										</div>
-										<div className="text-center text-sm text-gray-300 md:text-base">
-											In this game, you&apos;ll be given a set of lyrics from one song by a particular artist, along
-											with an image that might be related to the artist or their music video. Your challenge is to
-											guess the name of the artist based on these clues. The more correct answers you get, the more
-											points you&apos;ll score.
-										</div>
+								</div>
+								<div className="p-4">
+									<div className="mb-2 flex cursor-pointer items-center justify-center text-xl font-semibold text-gray-500 hover:underline">
+										<BiAlbum className="mr-2 fill-gray-500" /> Name the Album*
 									</div>
-									<div className="p-4">
-										<div className="mb-2 flex items-center justify-center text-xl font-semibold">
-											<MdOutlineLyrics className="mr-2" />
-											Finish The Lyrics
-										</div>
-										<div className="text-center text-sm text-gray-300 md:text-base">
-											You&apos;ll be presented with the set of lyrics of a song by a particular artist. Your task is
-											to guess the next set of verses in the song. The more correct answers you get, the more points
-											you&apos;ll score.
-										</div>
+									<div className="text-center text-sm text-gray-300 md:text-base">
+										You&apos;ll be presented with a list of song titles from a specific music album, along with an image
+										that might be related to the album or its cover art. Your goal is to guess the name of the album
+										based on these clues. The more correct answers you get, the more points you&apos;ll earn.
 									</div>
-									<div className="p-4">
-										<div className="mb-2 flex items-center justify-center text-xl font-semibold">
-											<BsFillDice5Fill className="mr-2" />
-											Random
-										</div>
-										<div className="text-center text-sm text-gray-300 md:text-base">
-											In this game, you&apos;ll be presented with a series of random challenges based on the previous
-											game modes we&apos;ve described. Each challenge will be selected at random, and you may have to
-											guess the artist based on a set of lyrics, finish a verse, guess an album of given artist etc.
-										</div>
+								</div>
+								<div className="p-4">
+									<div className="mb-2 flex cursor-pointer items-center justify-center text-xl font-semibold text-gray-500 hover:underline">
+										<BsFillPersonFill className="mr-2 fill-gray-500" />
+										Guess the Artist*
+									</div>
+									<div className="text-center text-sm text-gray-300 md:text-base">
+										In this game, you&apos;ll be given a set of lyrics from one song by a particular artist, along with
+										an image that might be related to the artist or their music video. Your challenge is to guess the
+										name of the artist based on these clues. The more correct answers you get, the more points
+										you&apos;ll score.
+									</div>
+								</div>
+								<div className="p-4">
+									<div className="mb-2 flex cursor-pointer items-center justify-center text-xl font-semibold text-gray-500 hover:underline">
+										<MdOutlineLyrics className="mr-2 fill-gray-500" />
+										Finish the Lyrics*
+									</div>
+									<div className="text-center text-sm text-gray-300 md:text-base">
+										You&apos;ll be presented with the set of lyrics of a song by a particular artist. Your task is to
+										guess the next set of verses in the song. The more correct answers you get, the more points
+										you&apos;ll score.
+									</div>
+								</div>
+								<div className="p-4">
+									<div className="mb-2 flex cursor-pointer items-center justify-center text-xl font-semibold text-gray-500 hover:underline">
+										<BsFillDice5Fill className="mr-2 fill-gray-500" />
+										Random*
+									</div>
+									<div className="text-center text-sm text-gray-300 md:text-base">
+										In this game, you&apos;ll be presented with a series of random challenges based on the previous game
+										modes we&apos;ve described. Each challenge will be selected at random, and you may have to guess the
+										artist based on a set of lyrics, finish a verse, guess an album of given artist etc.
 									</div>
 								</div>
 							</div>
-						)}
+							<div className="text-base italic text-gray-500">*coming soon</div>
+						</div>
 					</div>
 				</main>
 				<Footer />

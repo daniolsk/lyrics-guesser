@@ -81,11 +81,16 @@ export const getPlaylistTracks = async (refresh_token: string, playlistId: strin
 	}
 };
 
-export const getUsersTopItems = async (refresh_token: string, type: 'artists' | 'tracks', limit: number) => {
+export const getUsersTopItems = async (
+	refresh_token: string,
+	type: 'artists' | 'tracks',
+	limit: number,
+	term: 'short_term' | 'medium_term'
+) => {
 	try {
 		const access_token = await getUserToken(refresh_token);
 
-		const response = await fetch(`https://api.spotify.com/v1/me/top/${type}?limit=${limit}&offset=0`, {
+		const response = await fetch(`https://api.spotify.com/v1/me/top/${type}?time_range=${term}&limit=${limit}&offset=0`, {
 			headers: {
 				Authorization: `Bearer ${access_token}`,
 			},
@@ -225,7 +230,7 @@ export const getRandomSongFromUserLastTracks = async (refresh_token: string) => 
 		let tracks;
 
 		try {
-			tracks = await getUsersTopItems(refresh_token, 'tracks', 50);
+			tracks = await getUsersTopItems(refresh_token, 'tracks', 50, 'medium_term');
 		} catch (error) {
 			throw new Error(`Spotify: error finding tracks`);
 		}
@@ -249,7 +254,7 @@ export const getRandomSongFromUserLastArists = async (refresh_token: string) => 
 		let artistId: string;
 		let artistName: string;
 
-		let items: Artist[] = await getUsersTopItems(refresh_token, 'artists', 30);
+		let items: Artist[] = await getUsersTopItems(refresh_token, 'artists', 30, 'medium_term');
 
 		let artists: Artist[] = [];
 

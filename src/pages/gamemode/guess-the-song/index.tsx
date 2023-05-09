@@ -8,9 +8,11 @@ import stringSim from 'string-similarity';
 import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
 
 import { getLyrics } from '@/utils/lyrics';
-import { getRandomArtistTrack } from '@/utils/spotify';
+import { getRandomSongFromUserLastArists, getRandomSongFromUserLastTracks } from '@/utils/spotify';
 import { Lyrics, Song } from '@/utils/types';
 import Footer from '@/components/ui/Footer';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/pages/api/auth/[...nextauth]';
 import LoadingFullScreen from '@/components/ui/LoadingFullScreen';
 
 export default function Guess({ song, error }: { song: Song; error?: string }) {
@@ -248,7 +250,9 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-	if (!context.query.artist) {
+	const session = await getServerSession(context.req, context.res, authOptions);
+
+	if (!session) {
 		return {
 			redirect: {
 				destination: '/',
@@ -257,20 +261,21 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		};
 	}
 
-	let artist = context.query.artist as string;
-
-	let market = context.query.market ? (context.query.market as string) : undefined;
-
 	try {
 		let i = 3;
-		let randomSong: { randomTrack: string; previewUrl: string; url: string; id: string };
+		let randomSong: { randomTrack: string; previewUrl: string; url: string; id: string; artist: string };
 
 		let lyricsObj: Lyrics | null;
 
 		do {
-			randomSong = await getRandomArtistTrack(artist, market);
+			let random = Math.round(Math.random());
+			if (random == 0) {
+				randomSong = await getRandomSongFromUserLastTracks(session.token);
+			} else {
+				randomSong = await getRandomSongFromUserLastArists(session.token);
+			}
 
-			lyricsObj = await getLyrics(randomSong.randomTrack, artist);
+			lyricsObj = await getLyrics(randomSong.randomTrack, randomSong.artist);
 
 			i--;
 
