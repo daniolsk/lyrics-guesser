@@ -155,10 +155,10 @@ export default function Home() {
 						) : (
 							<div className="flex flex-col text-center text-2xl">
 								<div className="mb-1 text-2xl font-semibold md:text-3xl">Other gamemodes:</div>
-								<div className="mb-6 text-sm font-semibold text-gray-300 md:text-base">
+								<div className="mb-12 text-sm font-semibold text-gray-300 md:text-base">
 									(songs are generated based on your Spotify)
 								</div>
-								<div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+								<div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-3">
 									<div className="p-4">
 										<div className="mb-2 flex items-center justify-center text-xl font-semibold">
 											<BsMusicNoteBeamed className="mr-2" />
