@@ -7,26 +7,14 @@ import { GetServerSideProps } from 'next';
 import stringSim from 'string-similarity';
 import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
 
-import { getLyrics } from '@/utils/lyrics';
 import { getRandomAlbumTracksFromUserLastArtists, getRandomSongFromUserLastArists, getRandomSongFromUserLastTracks } from '@/utils/spotify';
-import { Lyrics, Song } from '@/utils/types';
 import Footer from '@/components/ui/Footer';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/pages/api/auth/[...nextauth]';
 import LoadingFullScreen from '@/components/ui/LoadingFullScreen';
+import { type Album } from '@/utils/types';
 
-type RandomAlbum = {
-	name: string;
-	releaseDate: string;
-	artist: string;
-	url: string;
-	id: string;
-	totalTracks: number;
-	tracks: any;
-	image: string;
-};
-
-export default function Guess({ album, error }: { album: RandomAlbum; error?: string }) {
+export default function Guess({ album, error }: { album: Album; error?: string }) {
 	const router = useRouter();
 
 	const [time, setTime] = useState(5);
@@ -35,7 +23,7 @@ export default function Guess({ album, error }: { album: RandomAlbum; error?: st
 	const [isGuessed, setIsGuessed] = useState(false);
 	const [isCorrect, setIsCorrect] = useState<Boolean>();
 	const [isLoading, setIsLoading] = useState(false);
-	const [showImg, setShowImg] = useState(false);
+	const [showMore, setShowMore] = useState(false);
 
 	useEffect(() => {
 		let i = setInterval(() => {
@@ -105,63 +93,81 @@ export default function Guess({ album, error }: { album: RandomAlbum; error?: st
 								Name the Album
 							</h1>
 						</div>
-						{isGuessed ? (
-							<Link href={album.url} target="_blank" className="mb-10 mt-4 bg-gray-1000">
+						<div className="flex w-full max-w-4xl flex-col items-center lg:my-8 lg:flex-row lg:justify-around">
+							{isGuessed ? (
+								<Link href={album.url} target="_blank" className="mb-10 mt-4 bg-gray-1000">
+									<div className="relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72">
+										<Image
+											fill
+											src={album.image}
+											priority
+											quality={100}
+											sizes="(max-width: 768px) 100vw,
+										(max-width: 1200px) 50vw,
+										33vw"
+											alt="song image"
+											className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]`}
+										/>
+									</div>
+								</Link>
+							) : (
 								<div
-									className="relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72"
-									onClick={() => setShowImg(true)}
+									className="relative mb-10 mt-4 h-60 w-60 bg-gray-1000 p-4 sm:h-72 sm:w-72"
+									onContextMenu={(e) => e.preventDefault()}
 								>
+									<div className=" absolute left-0 top-0 z-10 flex h-full w-full items-center justify-center bg-transparent fill-gray-300 font-semibold text-gray-300 hover:fill-gray-100 hover:text-gray-100 md:text-base">
+										<div className="flex items-center text-4xl text-inherit drop-shadow-[2px_5px_5px_rgb(0,0,0)]">
+											<AiFillQuestionCircle />
+										</div>
+									</div>
 									<Image
 										fill
-										onContextMenu={(e) => e.preventDefault()}
 										src={album.image}
 										priority
 										quality={100}
 										sizes="(max-width: 768px) 100vw,
-										(max-width: 1200px) 50vw,
-										33vw"
-										alt="song image"
-										className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]`}
-									/>
-								</div>
-							</Link>
-						) : (
-							<div
-								className="relative mb-10 mt-4 h-60 w-60 bg-gray-1000 p-4 sm:h-72 sm:w-72"
-								onClick={() => setShowImg(true)}
-							>
-								{showImg ? (
-									''
-								) : (
-									<div className=" absolute left-0 top-0 z-10 flex h-full w-full cursor-pointer items-center justify-center bg-transparent fill-gray-300 font-semibold text-gray-300 hover:fill-gray-100 hover:text-gray-100 md:text-base">
-										<div className="flex items-center text-inherit drop-shadow-[2px_5px_5px_rgb(0,0,0)]">
-											<AiFillQuestionCircle className="mr-2 fill-inherit" size={18} />
-											Show image
-										</div>
-									</div>
-								)}
-								<Image
-									fill
-									onContextMenu={(e) => e.preventDefault()}
-									src={album.image}
-									priority
-									quality={100}
-									sizes="(max-width: 768px) 100vw,
 									(max-width: 1200px) 50vw,
 									33vw"
-									alt="song image"
-									className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
-										isGuessed || showImg ? `` : `blur-[14px] grayscale`
-									}`}
-								/>
-							</div>
-						)}
-						<div className="mb-6 grid grid-cols-1 grid-rows-5 gap-x-6 gap-y-1 text-center font-semibold italic md:grid-cols-2 lg:grid-cols-3">
-							{album.tracks.map((track: { id: string; name: string; track_number: number }) => (
-								<div key={track.id}>
-									<span className="text-gray-400">{track.track_number}.</span> {track.name}
+										alt="song image"
+										className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] blur-[14px] grayscale`}
+									/>
 								</div>
-							))}
+							)}
+							<div className="mb-6 flex max-w-2xl flex-col items-center gap-y-1 text-center font-semibold italic">
+								{showMore ? (
+									<>
+										<div className="mb-2 text-xl">Tracklist</div>
+										{album.tracks.slice(0, 10).map((track: { id: string; name: string; track_number: number }) => (
+											<div key={track.id}>
+												<span className="text-gray-400">{track.track_number}.</span> {track.name}
+											</div>
+										))}
+										{album.tracks.length > 10 ? '...' : ''}
+									</>
+								) : (
+									<>
+										<div className="mb-2 text-xl">Tracklist</div>
+										{album.tracks.slice(0, 5).map((track: { id: string; name: string; track_number: number }) => (
+											<div key={track.id}>
+												<span className="text-gray-400">{track.track_number}.</span> {track.name}
+											</div>
+										))}
+										{album.tracks.length > 5 ? (
+											<button
+												className="mt-2 flex w-full cursor-pointer items-center justify-center fill-gray-300 text-sm text-gray-300 hover:fill-gray-200 hover:text-gray-200 md:text-base"
+												onClick={() => setShowMore(true)}
+											>
+												<span className="flex items-center text-inherit">
+													<AiFillQuestionCircle className="mr-2 fill-inherit" size={18} />
+													Show more tracks
+												</span>
+											</button>
+										) : (
+											''
+										)}
+									</>
+								)}
+							</div>
 						</div>
 						{isGuessed ? (
 							<div>
@@ -246,7 +252,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 	}
 
 	try {
-		let randomAlbum: RandomAlbum;
+		let randomAlbum: Album;
 
 		randomAlbum = await getRandomAlbumTracksFromUserLastArtists(session.token);
 

@@ -4,7 +4,12 @@ const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 type Album = {
 	album_type: string;
 	album_group: string;
+	name: string;
+	total_tracks: number;
+	release_date: string;
 	id: string;
+	external_urls: { spotify: string };
+	images: { url: string }[];
 };
 
 type Track = {
@@ -254,7 +259,7 @@ export const getRandomSongFromUserLastArists = async (refresh_token: string) => 
 		let artistId: string;
 		let artistName: string;
 
-		let items: Artist[] = await getUsersTopItems(refresh_token, 'artists', 30, 'medium_term');
+		let items: Artist[] = await getUsersTopItems(refresh_token, 'artists', 10, 'medium_term');
 
 		let artists: Artist[] = [];
 
@@ -295,7 +300,7 @@ export const getRandomAlbumTracksFromUserLastArtists = async (refresh_token: str
 		let artistId: string;
 		let artistName: string;
 
-		let items: Artist[] = await getUsersTopItems(refresh_token, 'artists', 30, 'medium_term');
+		let items: Artist[] = await getUsersTopItems(refresh_token, 'artists', 10, 'medium_term');
 
 		let artists: Artist[] = [];
 
@@ -308,16 +313,7 @@ export const getRandomAlbumTracksFromUserLastArtists = async (refresh_token: str
 		artistId = artists[index].id;
 		artistName = artists[index].name;
 
-		let albums: {
-			name: string;
-			total_tracks: number;
-			release_date: string;
-			id: string;
-			external_urls: { spotify: string };
-			album_type: string;
-			album_group: string;
-			images: { url: string }[];
-		}[] = await getAllArtistAlbums(artistId);
+		let albums: Album[] = await getAllArtistAlbums(artistId);
 
 		albums = albums.filter((album) => album.album_type == 'album');
 		albums = albums.filter((album) => album.album_group == 'album');

@@ -13,3 +13,14 @@ export type Lyrics = {
 	songArtist: string;
 	songArtistNames: string;
 };
+
+export type Album = {
+	name: string;
+	releaseDate: string;
+	artist: string;
+	url: string;
+	id: string;
+	totalTracks: number;
+	tracks: any;
+	image: string;
+};

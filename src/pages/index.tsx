@@ -53,7 +53,13 @@ export default function Home() {
 						<div className="flex flex-1 justify-between">
 							<div className="flex items-center">
 								<div className="relative mr-4 h-9 w-9">
-									<Image alt="user avatar" src={session.user.image} fill className="rounded-full object-cover" />
+									<Image
+										alt="user avatar"
+										sizes="5vw"
+										src={session.user.image}
+										fill
+										className="rounded-full object-cover"
+									/>
 								</div>
 								<div className="mr-4 text-base md:text-lg">
 									Hi, <span className="font-semibold">{session.user.name}</span>
