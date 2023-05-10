@@ -5,7 +5,7 @@ import { authOptions } from '../api/auth/[...nextauth]';
 
 export default function SignIn({ providers, error }: InferGetServerSidePropsType<typeof getServerSideProps>) {
 	return (
-		<div className="flex h-screen w-screen flex-col items-center justify-center">
+		<div className="flex min-h-[100svh] w-screen flex-col items-center justify-center">
 			<div className="mb-2 text-3xl font-semibold">Sign in</div>
 			{Object.values(providers).map((provider) => (
 				<div key={provider.name}>
