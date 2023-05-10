@@ -194,7 +194,8 @@ export default function Home() {
 										onClick={() => handleGamemode('name-the-album')}
 										className="mb-2 flex cursor-pointer items-center justify-center text-xl font-semibold hover:underline"
 									>
-										<BiAlbum className="mr-2" /> Name the Album
+										<BiAlbum className="mr-2" /> Name the Album{' '}
+										<span className="ml-2 animate-pulse text-red-500">(new)</span>
 									</div>
 									<div className="text-center text-sm text-gray-300 md:text-base">
 										You&apos;ll be presented with a list of song titles from a specific music album, along with an image
