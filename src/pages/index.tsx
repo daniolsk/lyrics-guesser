@@ -10,15 +10,15 @@ import Footer from '@/components/ui/Footer';
 import Loading from '@/components/ui/Loading';
 
 import { BsMusicNoteBeamed, BsFillPersonFill, BsFillDice5Fill } from 'react-icons/bs';
+import { BsBoxArrowInLeft } from 'react-icons/bs';
 import { BiAlbum } from 'react-icons/bi';
 import { MdOutlineLyrics } from 'react-icons/md';
-import Link from 'next/link';
 import LoadingFullScreen from '@/components/ui/LoadingFullScreen';
 
 export default function Home() {
 	const { data: session } = useSession();
-
-	const ref = useRef<HTMLDivElement>(null);
+	const refGamemodes = useRef<HTMLDivElement>(null);
+	const refNameTheAlbum = useRef<HTMLDivElement>(null);
 
 	const [artist, setArtist] = useState('');
 	const [market, setMarket] = useState('');
@@ -32,7 +32,7 @@ export default function Home() {
 	};
 
 	const handleClickScroll = () => {
-		ref.current?.scrollIntoView({ behavior: 'smooth' });
+		refGamemodes.current?.scrollIntoView({ behavior: 'smooth' });
 	};
 
 	const handleGamemode = (url: string) => {
@@ -91,8 +91,14 @@ export default function Home() {
 								Song
 							</span>
 						</div>
-						<div className="mb-8 text-center text-base font-normal md:text-xl">
-							Check how well you know your favorite artist
+						<div className="mb-8 flex flex-col items-center text-center text-base font-normal md:flex-row md:text-xl">
+							<div className="whitespace-nowrap text-lg">Check out new gamemode:</div>
+							<button
+								onClick={() => refNameTheAlbum.current?.scrollIntoView({ behavior: 'smooth' })}
+								className="ml-2 flex items-center justify-center text-lg font-semibold hover:underline md:text-xl"
+							>
+								<span>Name the Album</span> <BsBoxArrowInLeft className="ml-2" />
+							</button>
 						</div>
 						<form className="mb-4 flex flex-col" onSubmit={(e) => handleSubmit(e)}>
 							<div className="mb-4 flex items-center justify-center">
@@ -162,7 +168,7 @@ export default function Home() {
 							/>
 						</svg>
 					</div>
-					<div className="flex flex-col items-center justify-center pt-10" ref={ref}>
+					<div className="flex flex-col items-center justify-center pt-10" ref={refGamemodes}>
 						<div className="flex flex-col text-center text-2xl">
 							<div className="mb-1 text-2xl font-semibold md:text-3xl">Other gamemodes:</div>
 							<div className="mb-12 flex flex-col items-center justify-center">
@@ -195,7 +201,7 @@ export default function Home() {
 										more correct answers you get, the more points you&apos;ll score.
 									</div>
 								</div>
-								<div className="p-4">
+								<div className="p-4" ref={refNameTheAlbum}>
 									<div
 										onClick={() => handleGamemode('name-the-album')}
 										className="mb-2 flex cursor-pointer items-center justify-center text-xl font-semibold hover:underline"
@@ -204,9 +210,9 @@ export default function Home() {
 										<span className="ml-2 animate-pulse text-red-500">(new)</span>
 									</div>
 									<div className="text-center text-sm text-gray-300 md:text-base">
-										You&apos;ll be presented with a list of song titles from a specific music album, along with an image
-										that might be related to the album or its cover art. Your goal is to guess the name of the album
-										based on these clues. The more correct answers you get, the more points you&apos;ll earn.
+										You&apos;ll be presented with a list of song titles from a specific music album. Your goal is to
+										guess the name of the album based on these clues. The more correct answers you get, the more points
+										you&apos;ll earn.
 									</div>
 								</div>
 								<div className="p-4">
