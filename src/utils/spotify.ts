@@ -290,6 +290,57 @@ export const getRandomSongFromUserLastArists = async (refresh_token: string) => 
 	}
 };
 
+export const getRandomAlbumTracksFromUserLastArtists = async (refresh_token: string) => {
+	try {
+		let artistId: string;
+		let artistName: string;
+
+		let items: Artist[] = await getUsersTopItems(refresh_token, 'artists', 30, 'medium_term');
+
+		let artists: Artist[] = [];
+
+		for (const artist of items) {
+			artists.push({ name: artist.name, id: artist.id });
+		}
+
+		let index = Math.floor(Math.random() * artists.length);
+
+		artistId = artists[index].id;
+		artistName = artists[index].name;
+
+		let albums: {
+			name: string;
+			total_tracks: number;
+			release_date: string;
+			id: string;
+			external_urls: { spotify: string };
+			album_type: string;
+			album_group: string;
+			images: { url: string }[];
+		}[] = await getAllArtistAlbums(artistId);
+
+		albums = albums.filter((album) => album.album_type == 'album');
+		albums = albums.filter((album) => album.album_group == 'album');
+
+		const randomAlbum = albums[Math.floor(Math.random() * albums.length)];
+
+		let tracks: Track[] = await getAlbumTracks(randomAlbum.id);
+
+		return {
+			name: randomAlbum.name,
+			releaseDate: randomAlbum.release_date,
+			totalTracks: randomAlbum.total_tracks,
+			artist: artistName,
+			url: randomAlbum.external_urls.spotify,
+			id: randomAlbum.id,
+			tracks: tracks,
+			image: randomAlbum.images[0].url,
+		};
+	} catch (error) {
+		throw new Error('ERROR AT API CALL: getRandomAlbumTracksFromUserLastArtists', { cause: error });
+	}
+};
+
 export const getRandomArtistTrack = async (artistName: string, market?: string) => {
 	try {
 		let artistId: string = await getArtistId(artistName, market);

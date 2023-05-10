@@ -2,7 +2,7 @@ const Loading = ({ show }: { show: boolean }) => {
 	return (
 		<>
 			{show ? (
-				<div className="fixed bottom-5 right-5 rounded-xl bg-black p-4">
+				<div className="fixed bottom-5 right-5 rounded-xl bg-black bg-opacity-20 p-4">
 					<svg className={`h-6 w-6 animate-spin text-white`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
 						<circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
 						<path
