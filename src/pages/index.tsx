@@ -35,6 +35,15 @@ export default function Home() {
 		ref.current?.scrollIntoView({ behavior: 'smooth' });
 	};
 
+	const handleGamemode = (url: string) => {
+		if (!session) {
+			return signIn();
+		}
+
+		setIsLoading(true);
+		router.push(`/gamemode/${url}`);
+	};
+
 	return (
 		<div className="bg-[url('/bg.svg')] bg-[length:160rem] bg-top bg-repeat">
 			<LoadingFullScreen show={isLoading} />
@@ -147,7 +156,7 @@ export default function Home() {
 							/>
 						</svg>
 					</div>
-					<div className="mt-10 flex flex-col items-center justify-center" ref={ref}>
+					<div className="flex flex-col items-center justify-center pt-10" ref={ref}>
 						<div className="flex flex-col text-center text-2xl">
 							<div className="mb-1 text-2xl font-semibold md:text-3xl">Other gamemodes:</div>
 							<div className="mb-12 flex flex-col items-center justify-center">
@@ -168,10 +177,7 @@ export default function Home() {
 							<div className="mb-6 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
 								<div className="p-4">
 									<div
-										onClick={() => {
-											setIsLoading(true);
-											router.push('/gamemode/guess-the-song');
-										}}
+										onClick={() => handleGamemode('guess-the-song')}
 										className="mb-2 flex cursor-pointer items-center justify-center text-xl font-semibold hover:underline"
 									>
 										<BsMusicNoteBeamed className="mr-2" />
