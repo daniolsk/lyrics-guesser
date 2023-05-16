@@ -34,7 +34,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
               function gtag(){dataLayer.push(arguments);}
               gtag('js', new Date());
 
-              gtag('config', '${gtag.GA_TRACKING_ID}', {
+              gtag('config', 'G-4GF7769HMD', {
                 page_path: window.location.pathname,
               });
             `,
@@ -42,7 +42,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
 				/>
 			</Head>
 			{/* Global Site Tag (gtag.js) - Google Analytics */}
-			<Script strategy="afterInteractive" src={`https://www.googletagmanager.com/gtag/js?id=${gtag.GA_TRACKING_ID}`} />
+			<Script strategy="afterInteractive" src={`https://www.googletagmanager.com/gtag/js?id=G-4GF7769HMD`} />
 			<SessionProvider session={session}>
 				<Component {...pageProps} />
 			</SessionProvider>
