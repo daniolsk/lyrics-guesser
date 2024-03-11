@@ -22,6 +22,7 @@ export default function App({ Component, pageProps: { session, ...pageProps } }:
 	return (
 		<>
 			<Head>
+				<link rel="icon" href="/favicon.svg" />
 				<script
 					async
 					src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3539636730894037"
