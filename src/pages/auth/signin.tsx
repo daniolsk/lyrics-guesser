@@ -19,8 +19,8 @@ export default function SignIn({ providers, error }: InferGetServerSidePropsType
 					</button>
 				</div>
 			))}
-			<div className="italic text-gray-400">
-				*currently not aviable{' '}
+			<div className="px-2 text-center italic text-gray-400">
+				*due to Spotify regulations, this option is currently unavailable{' '}
 				<Link className="underline" href="/">
 					(go back)
 				</Link>
