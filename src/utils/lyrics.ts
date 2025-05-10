@@ -1,13 +1,15 @@
 import Genius from 'genius-lyrics';
 
-const Client = new Genius.Client();
+const Client = new Genius.Client(process.env.GENIUS_SECRET as string);
 
 export const getLyrics = async (title: string, artist?: string) => {
 	let songs;
 	try {
 		songs = await Client.songs.search(title + ' ' + (artist ? artist : ''));
 	} catch (error) {
-		console.log(`Genius: lyrics for artist: "${artist}" and track: "${title}" not found`);
+		console.log(
+			`Genius: lyrics for artist: "${artist}" and track: "${title}" not found`
+		);
 		return null;
 	}
 
@@ -17,7 +19,9 @@ export const getLyrics = async (title: string, artist?: string) => {
 	const songArtistNames = songs[0].raw.artist_names;
 
 	const lyrics = await songs[0].lyrics();
-	const lyricsArray = lyrics.split('\n').filter((l: string) => l.length && l[0] !== '[');
+	const lyricsArray = lyrics
+		.split('\n')
+		.filter((l: string) => l.length && l[0] !== '[');
 	const indexLyrics = Math.floor(Math.random() * (lyricsArray.length - 3));
 
 	return {
