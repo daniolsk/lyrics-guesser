@@ -1,4 +1,4 @@
-import Genius from 'genius-lyrics';
+const Genius = require('genius-lyrics');
 
 const Client = new Genius.Client(process.env.GENIUS_SECRET as string);
 
@@ -15,9 +15,9 @@ export const getLyrics = async (title: string, artist?: string) => {
 	}
 
 	const songTitle = songs[0].title.replace(/(^[\s\u200b]*|[\s\u200b]*$)/g, '');
-	const songImage = songs[0].raw.song_art_image_url;
+	const songImage = songs[0]._raw.song_art_image_url;
 	const songArtist = songs[0].artist.name;
-	const songArtistNames = songs[0].raw.artist_names;
+	const songArtistNames = songs[0]._raw.artist_names;
 
 	const lyrics = await songs[0].lyrics();
 	const lyricsArray = lyrics
