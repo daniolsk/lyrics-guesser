@@ -10,6 +10,7 @@ export const getLyrics = async (title: string, artist?: string) => {
 		console.log(
 			`Genius: lyrics for artist: "${artist}" and track: "${title}" not found`
 		);
+		console.error(error);
 		return null;
 	}
 
