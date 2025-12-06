@@ -29,7 +29,9 @@ export const getUserToken = async (refresh_token: string) => {
 		const response = await fetch('https://accounts.spotify.com/api/token', {
 			method: 'POST',
 			headers: {
-				Authorization: `Basic ` + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'),
+				Authorization:
+					`Basic ` +
+					Buffer.from(`${clientId}:${clientSecret}`).toString('base64'),
 				'Content-Type': 'application/x-www-form-urlencoded',
 			},
 			body: new URLSearchParams({
@@ -56,7 +58,8 @@ export const getUsersPlaylists = async (refresh_token: string) => {
 			},
 		});
 
-		if (!response.ok) console.error('ERROR: Request failed with status: ' + response.status);
+		if (!response.ok)
+			console.error('ERROR: Request failed with status: ' + response.status);
 
 		const data = await response.json();
 
@@ -66,17 +69,24 @@ export const getUsersPlaylists = async (refresh_token: string) => {
 	}
 };
 
-export const getPlaylistTracks = async (refresh_token: string, playlistId: string) => {
+export const getPlaylistTracks = async (
+	refresh_token: string,
+	playlistId: string
+) => {
 	try {
 		const access_token = await getUserToken(refresh_token);
 
-		const response = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}?additional_types=track`, {
-			headers: {
-				Authorization: `Bearer ${access_token}`,
-			},
-		});
+		const response = await fetch(
+			`https://api.spotify.com/v1/playlists/${playlistId}?additional_types=track`,
+			{
+				headers: {
+					Authorization: `Bearer ${access_token}`,
+				},
+			}
+		);
 
-		if (!response.ok) console.error('ERROR: Request failed with status: ' + response.status);
+		if (!response.ok)
+			console.error('ERROR: Request failed with status: ' + response.status);
 
 		const data = await response.json();
 
@@ -95,13 +105,17 @@ export const getUsersTopItems = async (
 	try {
 		const access_token = await getUserToken(refresh_token);
 
-		const response = await fetch(`https://api.spotify.com/v1/me/top/${type}?time_range=${term}&limit=${limit}&offset=0`, {
-			headers: {
-				Authorization: `Bearer ${access_token}`,
-			},
-		});
+		const response = await fetch(
+			`https://api.spotify.com/v1/me/top/${type}?time_range=${term}&limit=${limit}&offset=0`,
+			{
+				headers: {
+					Authorization: `Bearer ${access_token}`,
+				},
+			}
+		);
 
-		if (!response.ok) console.error('ERROR: Request failed with status: ' + response.status);
+		if (!response.ok)
+			console.error('ERROR: Request failed with status: ' + response.status);
 
 		const data = await response.json();
 
@@ -114,7 +128,10 @@ export const getUsersTopItems = async (
 export const getAppToken = async () => {
 	try {
 		let myHeaders = new Headers();
-		myHeaders.append('Authorization', 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'));
+		myHeaders.append(
+			'Authorization',
+			'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
+		);
 		myHeaders.append('Content-Type', 'application/x-www-form-urlencoded');
 
 		const urlencoded = new URLSearchParams();
@@ -140,14 +157,17 @@ export const getArtist = async (artistId: string) => {
 	try {
 		const token = await getAppToken();
 
-		const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}`, {
-			method: 'GET',
-			headers: {
-				Accept: 'application/json',
-				ContentType: 'application/json',
-				Authorization: `Bearer ${token.access_token}`,
-			},
-		});
+		const response = await fetch(
+			`https://api.spotify.com/v1/artists/${artistId}`,
+			{
+				method: 'GET',
+				headers: {
+					Accept: 'application/json',
+					ContentType: 'application/json',
+					Authorization: `Bearer ${token.access_token}`,
+				},
+			}
+		);
 
 		if (!response.ok) console.error('ERROR: Request failed' + response.status);
 
@@ -162,16 +182,20 @@ export const getAllArtistAlbums = async (artistId: string) => {
 	try {
 		const token = await getAppToken();
 
-		const response = await fetch(`https://api.spotify.com/v1/artists/${artistId}/albums?limit=50`, {
-			method: 'GET',
-			headers: {
-				Accept: 'application/json',
-				ContentType: 'application/json',
-				Authorization: `Bearer ${token.access_token}`,
-			},
-		});
+		const response = await fetch(
+			`https://api.spotify.com/v1/artists/${artistId}/albums?limit=50`,
+			{
+				method: 'GET',
+				headers: {
+					Accept: 'application/json',
+					ContentType: 'application/json',
+					Authorization: `Bearer ${token.access_token}`,
+				},
+			}
+		);
 
-		if (!response.ok) console.error('ERROR: Request failed with status: ' + response.status);
+		if (!response.ok)
+			console.error('ERROR: Request failed with status: ' + response.status);
 
 		const data = await response.json();
 		return data.items;
@@ -183,14 +207,17 @@ export const getAllArtistAlbums = async (artistId: string) => {
 export const getAlbumTracks = async (albumId: string) => {
 	try {
 		const token = await getAppToken();
-		const response = await fetch(`https://api.spotify.com/v1/albums/${albumId}/tracks`, {
-			method: 'GET',
-			headers: {
-				Accept: 'application/json',
-				ContentType: 'application/json',
-				Authorization: `Bearer ${token.access_token}`,
-			},
-		});
+		const response = await fetch(
+			`https://api.spotify.com/v1/albums/${albumId}/tracks`,
+			{
+				method: 'GET',
+				headers: {
+					Accept: 'application/json',
+					ContentType: 'application/json',
+					Authorization: `Bearer ${token.access_token}`,
+				},
+			}
+		);
 
 		if (!response.ok) console.error('ERROR: Request failed' + response.status);
 
@@ -230,12 +257,19 @@ export const getArtistId = async (artistName: string, market?: string) => {
 	}
 };
 
-export const getRandomSongFromUserLastTracks = async (refresh_token: string) => {
+export const getRandomSongFromUserLastTracks = async (
+	refresh_token: string
+) => {
 	try {
 		let tracks;
 
 		try {
-			tracks = await getUsersTopItems(refresh_token, 'tracks', 50, 'medium_term');
+			tracks = await getUsersTopItems(
+				refresh_token,
+				'tracks',
+				50,
+				'medium_term'
+			);
 		} catch (error) {
 			throw new Error(`Spotify: error finding tracks`);
 		}
@@ -250,16 +284,25 @@ export const getRandomSongFromUserLastTracks = async (refresh_token: string) => 
 			artist: randomTrack.artists[0].name,
 		};
 	} catch (error) {
-		throw new Error('ERROR AT API CALL: getRandomSongFromUserLastTracks', { cause: error });
+		throw new Error('ERROR AT API CALL: getRandomSongFromUserLastTracks', {
+			cause: error,
+		});
 	}
 };
 
-export const getRandomSongFromUserLastArists = async (refresh_token: string) => {
+export const getRandomSongFromUserLastArists = async (
+	refresh_token: string
+) => {
 	try {
 		let artistId: string;
 		let artistName: string;
 
-		let items: Artist[] = await getUsersTopItems(refresh_token, 'artists', 10, 'medium_term');
+		let items: Artist[] = await getUsersTopItems(
+			refresh_token,
+			'artists',
+			10,
+			'medium_term'
+		);
 
 		let artists: Artist[] = [];
 
@@ -291,16 +334,25 @@ export const getRandomSongFromUserLastArists = async (refresh_token: string) => 
 			artist: artistName,
 		};
 	} catch (error) {
-		throw new Error('ERROR AT API CALL: getRandomSongFromUserLastArists', { cause: error });
+		throw new Error('ERROR AT API CALL: getRandomSongFromUserLastArists', {
+			cause: error,
+		});
 	}
 };
 
-export const getRandomAlbumTracksFromUserLastArtists = async (refresh_token: string) => {
+export const getRandomAlbumTracksFromUserLastArtists = async (
+	refresh_token: string
+) => {
 	try {
 		let artistId: string;
 		let artistName: string;
 
-		let items: Artist[] = await getUsersTopItems(refresh_token, 'artists', 10, 'medium_term');
+		let items: Artist[] = await getUsersTopItems(
+			refresh_token,
+			'artists',
+			10,
+			'medium_term'
+		);
 
 		let artists: Artist[] = [];
 
@@ -333,15 +385,27 @@ export const getRandomAlbumTracksFromUserLastArtists = async (refresh_token: str
 			image: randomAlbum.images[0].url,
 		};
 	} catch (error) {
-		throw new Error('ERROR AT API CALL: getRandomAlbumTracksFromUserLastArtists', { cause: error });
+		throw new Error(
+			'ERROR AT API CALL: getRandomAlbumTracksFromUserLastArtists',
+			{ cause: error }
+		);
 	}
 };
 
-export const getRandomArtistTrack = async (artistName: string, market?: string) => {
+export const getRandomArtistTrack = async (
+	artistName: string,
+	market?: string
+) => {
 	try {
 		let artistId: string = await getArtistId(artistName, market);
 
 		let albums: Album[] = await getAllArtistAlbums(artistId);
+
+		albums.filter(
+			(album) =>
+				album.total_tracks > 1 &&
+				album.name.toLowerCase().indexOf('instrumental') === -1
+		);
 
 		albums = albums.filter((album) => album.album_type == 'album');
 		albums = albums.filter((album) => album.album_group == 'album');
@@ -359,6 +423,8 @@ export const getRandomArtistTrack = async (artistName: string, market?: string) 
 			id: randomTrack.id,
 		};
 	} catch (error) {
-		throw new Error('ERROR AT API CALL: getRandomArtistTrack', { cause: error });
+		throw new Error('ERROR AT API CALL: getRandomArtistTrack', {
+			cause: error,
+		});
 	}
 };
