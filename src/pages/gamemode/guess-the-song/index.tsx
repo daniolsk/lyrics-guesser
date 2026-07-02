@@ -135,7 +135,7 @@ export default function Guess({ song, error }: { song?: Song; error?: string }) 
 										onContextMenu={(e) => e.preventDefault()}
 										src={song.songImage}
 										priority
-										quality={100}
+										quality={75}
 										sizes="(max-width: 768px) 100vw,
 										(max-width: 1200px) 50vw,
 										33vw"
@@ -164,7 +164,7 @@ export default function Guess({ song, error }: { song?: Song; error?: string }) 
 									onContextMenu={(e) => e.preventDefault()}
 									src={song.songImage}
 									priority
-									quality={100}
+									quality={75}
 									sizes="(max-width: 768px) 100vw,
 									(max-width: 1200px) 50vw,
 									33vw"

@@ -101,7 +101,7 @@ export default function Guess({ album, error }: { album: Album; error?: string }
 											fill
 											src={album.image}
 											priority
-											quality={100}
+											quality={75}
 											sizes="(max-width: 768px) 100vw,
 										(max-width: 1200px) 50vw,
 										33vw"
@@ -124,7 +124,7 @@ export default function Guess({ album, error }: { album: Album; error?: string }
 										fill
 										src={album.image}
 										priority
-										quality={100}
+										quality={75}
 										sizes="(max-width: 768px) 100vw,
 									(max-width: 1200px) 50vw,
 									33vw"

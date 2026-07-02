@@ -2,12 +2,10 @@ import { getLoadingText } from '@/utils/loadingTexts';
 import { useEffect, useState } from 'react';
 
 const Loading = ({ noText }: { noText?: boolean }) => {
-	const [loadingText, setLoadingText] = useState<string>();
+	const [loadingText, setLoadingText] = useState(() => getLoadingText());
 
 	useEffect(() => {
-		setLoadingText(getLoadingText());
-
-		let interval = setInterval(() => {
+		const interval = setInterval(() => {
 			setLoadingText((oldText) => getLoadingText(oldText));
 		}, 3000);
 

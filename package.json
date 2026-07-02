@@ -6,29 +6,29 @@
     "dev": "next dev -H 127.0.0.1 -p 7804",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint ."
   },
   "dependencies": {
-    "@types/node": "18.16.0",
-    "@types/react": "18.0.38",
-    "@types/react-dom": "18.0.11",
-    "autoprefixer": "10.4.14",
-    "eslint": "8.39.0",
-    "eslint-config-next": "13.3.1",
+    "@tailwindcss/postcss": "^4.3.2",
     "genius-lyrics": "^4.4.7",
-    "next": "13.3.1",
-    "next-auth": "^4.22.1",
-    "postcss": "8.4.23",
-    "react": "18.2.0",
-    "react-dom": "18.2.0",
-    "react-icons": "^4.8.0",
+    "next": "16.2.10",
+    "next-auth": "^4.24.14",
+    "postcss": "8.5.16",
+    "react": "19.2.7",
+    "react-dom": "19.2.7",
+    "react-icons": "^5.7.0",
     "string-similarity": "^4.0.4",
-    "tailwindcss": "3.3.1",
-    "typescript": "5.0.4"
+    "tailwindcss": "4.3.2"
   },
   "devDependencies": {
-    "@types/string-similarity": "^4.0.0",
-    "prettier": "^2.8.8",
-    "prettier-plugin-tailwindcss": "^0.2.7"
+    "@types/node": "26.1.0",
+    "@types/react": "19.2.17",
+    "@types/react-dom": "19.2.3",
+    "@types/string-similarity": "^4.0.2",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "16.2.10",
+    "prettier": "^3.9.4",
+    "prettier-plugin-tailwindcss": "^0.8.0",
+    "typescript": "6.0.3"
   }
 }
