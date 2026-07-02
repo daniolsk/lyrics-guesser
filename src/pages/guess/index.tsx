@@ -7,6 +7,7 @@ import { GetServerSideProps } from 'next';
 import stringSim from 'string-similarity';
 import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
 
+import { logRequest } from '@/utils/requestLog';
 import { getLyricsForTrack, isValidLyrics } from '@/utils/lyrics';
 import {
 	ArtistContext,
@@ -332,17 +333,28 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		? (context.query.market as string)
 		: undefined;
 
+	const requestStartedAt = Date.now();
+	logRequest('Guess', `GET /guess?artist=${artist}`, requestStartedAt, {
+		status: 'start',
+	});
+
 	try {
 		const artistContext: ArtistContext = await prepareArtistContext(artist, market);
 		let randomSong: TrackResult | null = null;
 		let lyricsObj: Lyrics | null = null;
+		let attempts = 0;
 
 		let nextTrackPromise = getRandomTrackFromContext(artistContext);
 
 		for (let attempt = 0; attempt < 3 && !lyricsObj; attempt++) {
+			attempts = attempt + 1;
+			const attemptStartedAt = Date.now();
 			const track = await nextTrackPromise;
 			nextTrackPromise = getRandomTrackFromContext(artistContext);
-			console.log('-------- SONG FOUND: ' + track.url);
+			logRequest('Guess', `attempt ${attempt + 1} track`, attemptStartedAt, {
+				status: 'ok',
+				track: track.randomTrack,
+			});
 
 			try {
 				const lyrics = await getLyricsForTrack(track.randomTrack, artist, {
@@ -355,22 +367,25 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 				if (isValidLyrics(lyrics)) {
 					randomSong = track;
 					lyricsObj = lyrics;
-					console.log(
-						'-------- LYRICS FOUND FOR SONG: ' +
-							lyrics.songTitle +
-							' ' +
-							lyrics.songArtistNames
-					);
+					logRequest('Guess', `attempt ${attempt + 1} lyrics`, attemptStartedAt, {
+						status: 'ok',
+						song: lyrics.songTitle,
+					});
 				}
 			} catch (error) {
-				console.error(
-					`-------- LYRICS NOT FOUND FOR SONG: ${track.randomTrack}`,
-					error
-				);
+				logRequest('Guess', `attempt ${attempt + 1} lyrics`, attemptStartedAt, {
+					status: 'error',
+					track: track.randomTrack,
+					error: error instanceof Error ? error.message : String(error),
+				});
 			}
 		}
 
 		if (!lyricsObj || !randomSong) {
+			logRequest('Guess', `GET /guess?artist=${artist}`, requestStartedAt, {
+				status: 'error',
+				error: 'Lyrics not found',
+			});
 			throw new Error('Lyrics not found!');
 		}
 
@@ -381,13 +396,22 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 			id: randomSong.id,
 		};
 
+		logRequest('Guess', `GET /guess?artist=${artist}`, requestStartedAt, {
+			status: 'ok',
+			song: songObj.songTitle,
+			attempts,
+		});
+
 		return {
 			props: {
 				song: sanitizeForPageProps(songObj),
 			},
 		};
 	} catch (error) {
-		console.error(error);
+		logRequest('Guess', `GET /guess?artist=${artist}`, requestStartedAt, {
+			status: 'error',
+			error: error instanceof Error ? error.message : String(error),
+		});
 
 		return {
 			props: {

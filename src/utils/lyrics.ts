@@ -2,6 +2,7 @@ const Genius = require('genius-lyrics');
 
 import stringSim from 'string-similarity';
 
+import { logRequest, timed } from '@/utils/requestLog';
 import { Lyrics } from '@/utils/types';
 
 const Client = new Genius.Client(process.env.GENIUS_SECRET as string);
@@ -109,6 +110,8 @@ const getLrclibLyricsText = (result: LrclibResult): string | null => {
 };
 
 const searchLrclib = async (params: URLSearchParams): Promise<LrclibResult[]> => {
+	const startedAt = Date.now();
+	const label = `GET /api/search?${params}`;
 	const controller = new AbortController();
 	const timeout = setTimeout(() => controller.abort(), LRCLIB_TIMEOUT_MS);
 
@@ -121,12 +124,27 @@ const searchLrclib = async (params: URLSearchParams): Promise<LrclibResult[]> =>
 		});
 
 		if (!response.ok) {
+			logRequest('LRCLIB', label, startedAt, {
+				status: 'error',
+				httpStatus: response.status,
+				results: 0,
+			});
 			return [];
 		}
 
 		const results = (await response.json()) as LrclibResult[];
-		return Array.isArray(results) ? results : [];
-	} catch {
+		const items = Array.isArray(results) ? results : [];
+		logRequest('LRCLIB', label, startedAt, {
+			status: 'ok',
+			results: items.length,
+		});
+		return items;
+	} catch (error) {
+		logRequest('LRCLIB', label, startedAt, {
+			status: 'error',
+			error: error instanceof Error ? error.message : String(error),
+			results: 0,
+		});
 		return [];
 	} finally {
 		clearTimeout(timeout);
@@ -196,39 +214,41 @@ const getLyricsTextFromLrclib = async (
 	title: string,
 	artists: string[] = []
 ): Promise<string> => {
-	const artistNames = expandArtistNames(artists);
-	const primaryArtist = artistNames[0] ?? '';
+	return timed('LRCLIB', `getLyricsText("${title}")`, async () => {
+		const artistNames = expandArtistNames(artists);
+		const primaryArtist = artistNames[0] ?? '';
 
-	const resultSets = await Promise.all([
-		searchLrclib(new URLSearchParams({ q: `${primaryArtist} ${title}` })),
-		primaryArtist
-			? searchLrclib(
-					new URLSearchParams({
-						track_name: title,
-						artist_name: primaryArtist,
-					})
-				)
-			: Promise.resolve([]),
-	]);
+		const resultSets = await Promise.all([
+			searchLrclib(new URLSearchParams({ q: `${primaryArtist} ${title}` })),
+			primaryArtist
+				? searchLrclib(
+						new URLSearchParams({
+							track_name: title,
+							artist_name: primaryArtist,
+						})
+					)
+				: Promise.resolve([]),
+		]);
 
-	const resultsById = new Map<number, LrclibResult>();
-	for (const resultSet of resultSets) {
-		for (const result of resultSet) {
-			resultsById.set(result.id, result);
+		const resultsById = new Map<number, LrclibResult>();
+		for (const resultSet of resultSets) {
+			for (const result of resultSet) {
+				resultsById.set(result.id, result);
+			}
 		}
-	}
 
-	const match = pickBestLrclibMatch(
-		Array.from(resultsById.values()),
-		title,
-		artistNames
-	);
+		const match = pickBestLrclibMatch(
+			Array.from(resultsById.values()),
+			title,
+			artistNames
+		);
 
-	if (!match) {
-		throw new Error('Lyrics not found');
-	}
+		if (!match) {
+			throw new Error('Lyrics not found');
+		}
 
-	return match;
+		return match;
+	});
 };
 
 const buildLyricsFromText = (
@@ -263,8 +283,15 @@ const getGeniusLyrics = async (
 	queryArtist: string,
 	metadata: SongMetadata
 ): Promise<Lyrics | null> => {
+	const startedAt = Date.now();
+
 	try {
+		const searchStartedAt = Date.now();
 		const songs = await Client.songs.search(`${title} ${queryArtist}`);
+		logRequest('Genius', `search("${title}" "${queryArtist}")`, searchStartedAt, {
+			status: 'ok',
+			results: songs?.length ?? 0,
+		});
 
 		if (!songs?.length) {
 			return null;
@@ -281,21 +308,36 @@ const getGeniusLyrics = async (
 			!songArtist ||
 			!songArtistNames
 		) {
+			logRequest('Genius', `getLyrics("${songTitle}")`, startedAt, {
+				status: 'error',
+				error: 'incomplete metadata',
+			});
 			return null;
 		}
 
+		const lyricsStartedAt = Date.now();
 		const lyricsText = await songs[0].lyrics();
+		logRequest('Genius', `getLyrics("${songTitle}")`, lyricsStartedAt, {
+			status: 'ok',
+			lines: parseLyricsLines(lyricsText).length,
+		});
+
 		if (parseLyricsLines(lyricsText).length < MIN_LYRIC_LINES) {
 			return null;
 		}
 
+		logRequest('Genius', `fallback("${title}")`, startedAt, { status: 'ok' });
 		return buildLyricsFromText(lyricsText, {
 			songTitle,
 			songImage: metadata.songImage || songImage,
 			songArtist,
 			songArtistNames,
 		});
-	} catch {
+	} catch (error) {
+		logRequest('Genius', `fallback("${title}")`, startedAt, {
+			status: 'error',
+			error: error instanceof Error ? error.message : String(error),
+		});
 		return null;
 	}
 };
@@ -305,31 +347,33 @@ export const getLyricsForTrack = async (
 	queryArtist: string,
 	metadata: SongMetadata
 ): Promise<Lyrics> => {
-	if (isInstrumentalTitle(title)) {
-		throw new Error('Lyrics not found');
-	}
-
-	const artistHints = expandArtistNames([
-		queryArtist,
-		metadata.songArtist,
-		metadata.songArtistNames,
-	]);
-
-	try {
-		const lyricsText = await getLyricsTextFromLrclib(title, artistHints);
-		return buildLyricsFromText(lyricsText, metadata);
-	} catch {
-		// Genius scrapes HTML and is often blocked from Vercel — use only as fallback.
-	}
-
-	if (process.env.VERCEL !== '1') {
-		const geniusLyrics = await getGeniusLyrics(title, queryArtist, metadata);
-		if (geniusLyrics) {
-			return geniusLyrics;
+	return timed('Lyrics', `getLyricsForTrack("${title}")`, async () => {
+		if (isInstrumentalTitle(title)) {
+			throw new Error('Lyrics not found');
 		}
-	}
 
-	throw new Error('Lyrics not found');
+		const artistHints = expandArtistNames([
+			queryArtist,
+			metadata.songArtist,
+			metadata.songArtistNames,
+		]);
+
+		try {
+			const lyricsText = await getLyricsTextFromLrclib(title, artistHints);
+			return buildLyricsFromText(lyricsText, metadata);
+		} catch {
+			// Genius scrapes HTML and is often blocked from Vercel — use only as fallback.
+		}
+
+		if (process.env.VERCEL !== '1') {
+			const geniusLyrics = await getGeniusLyrics(title, queryArtist, metadata);
+			if (geniusLyrics) {
+				return geniusLyrics;
+			}
+		}
+
+		throw new Error('Lyrics not found');
+	});
 };
 
 /** @deprecated Use getLyricsForTrack with Spotify metadata */

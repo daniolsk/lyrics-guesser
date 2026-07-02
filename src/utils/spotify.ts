@@ -1,3 +1,5 @@
+import { logRequest, timed } from '@/utils/requestLog';
+
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
 
@@ -66,8 +68,10 @@ const toTrackResult = (
 });
 
 const getAccessToken = async (): Promise<string> => {
+	const startedAt = Date.now();
 	const now = Date.now();
 	if (cachedToken && now < cachedToken.expiresAt - 60_000) {
+		logRequest('Spotify', 'POST /api/token (cached)', startedAt, { status: 'ok' });
 		return cachedToken.accessToken;
 	}
 
@@ -82,6 +86,10 @@ const getAccessToken = async (): Promise<string> => {
 	});
 
 	if (!response.ok) {
+		logRequest('Spotify', 'POST /api/token', startedAt, {
+			status: 'error',
+			httpStatus: response.status,
+		});
 		throw new Error(`Spotify token request failed: ${response.status}`);
 	}
 
@@ -91,23 +99,27 @@ const getAccessToken = async (): Promise<string> => {
 		expiresAt: now + data.expires_in * 1000,
 	};
 
+	logRequest('Spotify', 'POST /api/token', startedAt, { status: 'ok' });
 	return cachedToken.accessToken;
 };
 
 const spotifyFetch = async <T>(url: string): Promise<T> => {
-	const token = await getAccessToken();
-	const response = await fetch(url, {
-		headers: {
-			Accept: 'application/json',
-			Authorization: `Bearer ${token}`,
-		},
+	const path = url.replace('https://api.spotify.com', '');
+	return timed('Spotify', `GET ${path}`, async () => {
+		const token = await getAccessToken();
+		const response = await fetch(url, {
+			headers: {
+				Accept: 'application/json',
+				Authorization: `Bearer ${token}`,
+			},
+		});
+
+		if (!response.ok) {
+			throw new Error(`Spotify request failed: ${response.status} ${url}`);
+		}
+
+		return response.json();
 	});
-
-	if (!response.ok) {
-		throw new Error(`Spotify request failed: ${response.status} ${url}`);
-	}
-
-	return response.json();
 };
 
 const filterAlbums = (albums: Album[]) =>
@@ -158,39 +170,43 @@ export const prepareArtistContext = async (
 	artistName: string,
 	market?: string
 ): Promise<ArtistContext> => {
-	const data = await spotifyFetch<{
-		artists: { items: { id: string; name: string }[] };
-	}>(
-		`https://api.spotify.com/v1/search?query=${encodeURIComponent(artistName)}&type=artist${
-			market ? `&market=${market}` : ''
-		}&limit=1`
-	);
+	return timed('Spotify', `prepareArtistContext("${artistName}")`, async () => {
+		const data = await spotifyFetch<{
+			artists: { items: { id: string; name: string }[] };
+		}>(
+			`https://api.spotify.com/v1/search?query=${encodeURIComponent(artistName)}&type=artist${
+				market ? `&market=${market}` : ''
+			}&limit=1`
+		);
 
-	const artist = data.artists.items[0];
-	if (!artist) {
-		throw new Error(`Artist not found: ${artistName}`);
-	}
+		const artist = data.artists.items[0];
+		if (!artist) {
+			throw new Error(`Artist not found: ${artistName}`);
+		}
 
-	const albums = filterAlbums(await getAllArtistAlbums(artist.id));
-	if (!albums.length) {
-		throw new Error(`No albums found for artist: ${artistName}`);
-	}
+		const albums = filterAlbums(await getAllArtistAlbums(artist.id));
+		if (!albums.length) {
+			throw new Error(`No albums found for artist: ${artistName}`);
+		}
 
-	return {
-		artistId: artist.id,
-		artistName: artist.name,
-		albums,
-	};
+		return {
+			artistId: artist.id,
+			artistName: artist.name,
+			albums,
+		};
+	});
 };
 
 export const getRandomTrackFromContext = async (
 	context: ArtistContext
 ): Promise<TrackResult> => {
-	const randomAlbum = context.albums[Math.floor(Math.random() * context.albums.length)];
-	const tracks = await getAlbumTracks(randomAlbum.id);
-	const randomTrack = pickRandomTrack(tracks);
+	return timed('Spotify', 'getRandomTrackFromContext', async () => {
+		const randomAlbum = context.albums[Math.floor(Math.random() * context.albums.length)];
+		const tracks = await getAlbumTracks(randomAlbum.id);
+		const randomTrack = pickRandomTrack(tracks);
 
-	return toTrackResult(randomTrack, randomAlbum, context.artistName);
+		return toTrackResult(randomTrack, randomAlbum, context.artistName);
+	});
 };
 
 /** @deprecated Use prepareArtistContext + getRandomTrackFromContext */
