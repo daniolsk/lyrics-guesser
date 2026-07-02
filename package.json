@@ -12,7 +12,6 @@
     "@tailwindcss/postcss": "^4.3.2",
     "genius-lyrics": "^4.4.7",
     "next": "16.2.10",
-    "next-auth": "^4.24.14",
     "postcss": "8.5.16",
     "react": "19.2.7",
     "react-dom": "19.2.7",
