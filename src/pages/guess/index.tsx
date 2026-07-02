@@ -7,8 +7,13 @@ import { GetServerSideProps } from 'next';
 import stringSim from 'string-similarity';
 import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
 
-import { getLyrics, isValidLyrics } from '@/utils/lyrics';
-import { getRandomArtistTrack } from '@/utils/spotify';
+import { getLyricsForTrack, isValidLyrics } from '@/utils/lyrics';
+import {
+	ArtistContext,
+	getRandomTrackFromContext,
+	prepareArtistContext,
+	TrackResult,
+} from '@/utils/spotify';
 import { Lyrics, Song } from '@/utils/types';
 import Footer from '@/components/ui/Footer';
 import LoadingFullScreen from '@/components/ui/LoadingFullScreen';
@@ -328,47 +333,46 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 		: undefined;
 
 	try {
-		let i = 3;
-		let randomSong: {
-			randomTrack: string;
-			previewUrl: string | null;
-			url: string;
-			id: string;
-		};
+		const artistContext: ArtistContext = await prepareArtistContext(artist, market);
+		let randomSong: TrackResult | null = null;
+		let lyricsObj: Lyrics | null = null;
 
-		let lyricsObj: Lyrics | null;
+		let nextTrackPromise = getRandomTrackFromContext(artistContext);
 
-		do {
-			randomSong = await getRandomArtistTrack(artist, market);
+		for (let attempt = 0; attempt < 3 && !lyricsObj; attempt++) {
+			const track = await nextTrackPromise;
+			nextTrackPromise = getRandomTrackFromContext(artistContext);
+			console.log('-------- SONG FOUND: ' + track.url);
 
-			console.log('-------- SONG FOUND: ' + randomSong.url);
-
-			lyricsObj = null;
 			try {
-				const lyrics = await getLyrics(randomSong.randomTrack, artist);
-				lyricsObj = isValidLyrics(lyrics) ? lyrics : null;
+				const lyrics = await getLyricsForTrack(track.randomTrack, artist, {
+					songTitle: track.randomTrack,
+					songImage: track.albumImage,
+					songArtist: track.artistName,
+					songArtistNames: track.artistNames,
+				});
+
+				if (isValidLyrics(lyrics)) {
+					randomSong = track;
+					lyricsObj = lyrics;
+					console.log(
+						'-------- LYRICS FOUND FOR SONG: ' +
+							lyrics.songTitle +
+							' ' +
+							lyrics.songArtistNames
+					);
+				}
 			} catch (error) {
 				console.error(
-					`-------- LYRICS NOT FOUND FOR SONG: ${randomSong.randomTrack}`,
+					`-------- LYRICS NOT FOUND FOR SONG: ${track.randomTrack}`,
 					error
 				);
 			}
+		}
 
-			if (lyricsObj) {
-				console.log(
-					'-------- LYRICS FOUND FOR SONG: ' +
-						lyricsObj.songTitle +
-						' ' +
-						lyricsObj.songArtistNames
-				);
-			}
-
-			i--;
-
-			if (i <= 0 && !lyricsObj) {
-				throw new Error('Lyrics not found!');
-			}
-		} while (!lyricsObj);
+		if (!lyricsObj || !randomSong) {
+			throw new Error('Lyrics not found!');
+		}
 
 		let songObj: Song = {
 			...lyricsObj,

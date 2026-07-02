@@ -7,6 +7,7 @@ import { Lyrics } from '@/utils/types';
 const Client = new Genius.Client(process.env.GENIUS_SECRET as string);
 
 const MIN_LYRIC_LINES = 4;
+const LRCLIB_TIMEOUT_MS = 12_000;
 const LRCLIB_USER_AGENT =
 	'lyrics-guesser/0.1.0 (https://guessthesong.vercel.app)';
 
@@ -22,6 +23,13 @@ type LrclibResult = {
 	instrumental: boolean;
 	plainLyrics: string | null;
 	syncedLyrics: string | null;
+};
+
+type SongMetadata = {
+	songTitle: string;
+	songImage: string;
+	songArtist: string;
+	songArtistNames: string;
 };
 
 export const isValidLyrics = (lyrics: Lyrics | null | undefined): lyrics is Lyrics => {
@@ -58,7 +66,13 @@ const parseLyricsLines = (lyrics: string): string[] => {
 	return lyrics
 		.split('\n')
 		.map((line) => line.replace(/^\[\d{2}:\d{2}(?:\.\d+)?\]\s*/, '').trim())
-		.filter((line) => line.length > 0 && line[0] !== '[');
+		.map((line) => line.replace(/^\d+\s+Contributors.*$/i, '').trim())
+		.filter(
+			(line) =>
+				line.length > 0 &&
+				line[0] !== '[' &&
+				!/^\d+\s+Contributors/i.test(line)
+		);
 };
 
 const expandArtistNames = (artists: (string | undefined)[]): string[] => {
@@ -95,18 +109,28 @@ const getLrclibLyricsText = (result: LrclibResult): string | null => {
 };
 
 const searchLrclib = async (params: URLSearchParams): Promise<LrclibResult[]> => {
-	const response = await fetch(`https://lrclib.net/api/search?${params}`, {
-		headers: {
-			'User-Agent': LRCLIB_USER_AGENT,
-		},
-	});
+	const controller = new AbortController();
+	const timeout = setTimeout(() => controller.abort(), LRCLIB_TIMEOUT_MS);
 
-	if (!response.ok) {
+	try {
+		const response = await fetch(`https://lrclib.net/api/search?${params}`, {
+			headers: {
+				'User-Agent': LRCLIB_USER_AGENT,
+			},
+			signal: controller.signal,
+		});
+
+		if (!response.ok) {
+			return [];
+		}
+
+		const results = (await response.json()) as LrclibResult[];
+		return Array.isArray(results) ? results : [];
+	} catch {
 		return [];
+	} finally {
+		clearTimeout(timeout);
 	}
-
-	const results = (await response.json()) as LrclibResult[];
-	return Array.isArray(results) ? results : [];
 };
 
 const scoreLrclibResult = (result: LrclibResult, title: string, artists: string[]) => {
@@ -129,38 +153,12 @@ const scoreLrclibResult = (result: LrclibResult, title: string, artists: string[
 	return titleScore * 0.6 + artistScore * 0.4;
 };
 
-const getLyricsTextFromLrclib = async (
+const pickBestLrclibMatch = (
+	results: LrclibResult[],
 	title: string,
-	artists: string[] = []
-): Promise<string> => {
-	const artistNames = expandArtistNames(artists);
-	const searches: Promise<LrclibResult[]>[] = [];
-
-	for (const artist of artistNames) {
-		searches.push(
-			searchLrclib(
-				new URLSearchParams({
-					track_name: title,
-					artist_name: artist,
-				})
-			)
-		);
-		searches.push(searchLrclib(new URLSearchParams({ q: `${artist} ${title}` })));
-	}
-
-	searches.push(searchLrclib(new URLSearchParams({ track_name: title })));
-	searches.push(searchLrclib(new URLSearchParams({ q: title })));
-
-	const resultSets = await Promise.all(searches);
-	const resultsById = new Map<number, LrclibResult>();
-
-	for (const resultSet of resultSets) {
-		for (const result of resultSet) {
-			resultsById.set(result.id, result);
-		}
-	}
-
-	const candidates = Array.from(resultsById.values())
+	artistNames: string[]
+): string | null => {
+	const candidates = results
 		.map((result) => {
 			const lyricsText = getLrclibLyricsText(result);
 			if (!lyricsText || result.instrumental) {
@@ -191,21 +189,51 @@ const getLyricsTextFromLrclib = async (
 		)
 		.sort((a, b) => b.score - a.score);
 
-	if (!candidates.length) {
+	return candidates[0]?.lyricsText ?? null;
+};
+
+const getLyricsTextFromLrclib = async (
+	title: string,
+	artists: string[] = []
+): Promise<string> => {
+	const artistNames = expandArtistNames(artists);
+	const primaryArtist = artistNames[0] ?? '';
+
+	const resultSets = await Promise.all([
+		searchLrclib(new URLSearchParams({ q: `${primaryArtist} ${title}` })),
+		primaryArtist
+			? searchLrclib(
+					new URLSearchParams({
+						track_name: title,
+						artist_name: primaryArtist,
+					})
+				)
+			: Promise.resolve([]),
+	]);
+
+	const resultsById = new Map<number, LrclibResult>();
+	for (const resultSet of resultSets) {
+		for (const result of resultSet) {
+			resultsById.set(result.id, result);
+		}
+	}
+
+	const match = pickBestLrclibMatch(
+		Array.from(resultsById.values()),
+		title,
+		artistNames
+	);
+
+	if (!match) {
 		throw new Error('Lyrics not found');
 	}
 
-	return candidates[0].lyricsText;
+	return match;
 };
 
 const buildLyricsFromText = (
 	lyricsText: string,
-	metadata: {
-		songTitle: string;
-		songImage: string;
-		songArtist: string;
-		songArtistNames: string;
-	}
+	metadata: SongMetadata
 ): Lyrics => {
 	const lyricsArray = parseLyricsLines(lyricsText);
 
@@ -230,64 +258,106 @@ const buildLyricsFromText = (
 	return result;
 };
 
-export const getLyrics = async (title: string, artist?: string): Promise<Lyrics> => {
+const getGeniusLyrics = async (
+	title: string,
+	queryArtist: string,
+	metadata: SongMetadata
+): Promise<Lyrics | null> => {
+	try {
+		const songs = await Client.songs.search(`${title} ${queryArtist}`);
+
+		if (!songs?.length) {
+			return null;
+		}
+
+		const songTitle = songs[0].title.replace(/(^[\s\u200b]*|[\s\u200b]*$)/g, '');
+		const songImage = songs[0]._raw.song_art_image_url;
+		const songArtist = songs[0].artist.name;
+		const songArtistNames = songs[0]._raw.artist_names;
+
+		if (
+			isInstrumentalTitle(songTitle) ||
+			!songTitle ||
+			!songArtist ||
+			!songArtistNames
+		) {
+			return null;
+		}
+
+		const lyricsText = await songs[0].lyrics();
+		if (parseLyricsLines(lyricsText).length < MIN_LYRIC_LINES) {
+			return null;
+		}
+
+		return buildLyricsFromText(lyricsText, {
+			songTitle,
+			songImage: metadata.songImage || songImage,
+			songArtist,
+			songArtistNames,
+		});
+	} catch {
+		return null;
+	}
+};
+
+export const getLyricsForTrack = async (
+	title: string,
+	queryArtist: string,
+	metadata: SongMetadata
+): Promise<Lyrics> => {
 	if (isInstrumentalTitle(title)) {
 		throw new Error('Lyrics not found');
 	}
 
-	let songs;
+	const artistHints = expandArtistNames([
+		queryArtist,
+		metadata.songArtist,
+		metadata.songArtistNames,
+	]);
+
 	try {
-		songs = await Client.songs.search(title + ' ' + (artist ? artist : ''));
-	} catch (error) {
-		console.error(
-			`Genius: metadata for artist: "${artist}" and track: "${title}" not found`,
-			error
-		);
-		throw new Error('Lyrics not found');
+		const lyricsText = await getLyricsTextFromLrclib(title, artistHints);
+		return buildLyricsFromText(lyricsText, metadata);
+	} catch {
+		// Genius scrapes HTML and is often blocked from Vercel — use only as fallback.
 	}
 
-	if (!songs?.length) {
-		console.error(
-			`Genius: no search results for artist: "${artist}" and track: "${title}"`
-		);
-		throw new Error('Lyrics not found');
+	if (process.env.VERCEL !== '1') {
+		const geniusLyrics = await getGeniusLyrics(title, queryArtist, metadata);
+		if (geniusLyrics) {
+			return geniusLyrics;
+		}
 	}
 
-	const songTitle = songs[0].title.replace(/(^[\s\u200b]*|[\s\u200b]*$)/g, '');
-	const songImage = songs[0]._raw.song_art_image_url;
-	const songArtist = songs[0].artist.name;
-	const songArtistNames = songs[0]._raw.artist_names;
+	throw new Error('Lyrics not found');
+};
 
-	if (isInstrumentalTitle(songTitle)) {
-		throw new Error('Lyrics not found');
-	}
-
-	if (!songTitle || !songImage || !songArtist || !songArtistNames) {
-		console.error(
-			`Genius: incomplete metadata for artist: "${artist}" and track: "${title}"`
-		);
-		throw new Error('Lyrics not found');
-	}
-
-	let lyricsText: string;
+/** @deprecated Use getLyricsForTrack with Spotify metadata */
+export const getLyrics = async (title: string, artist?: string): Promise<Lyrics> => {
 	try {
-		lyricsText = await getLyricsTextFromLrclib(title, [
-			artist,
-			songArtist,
-			songArtistNames,
-		]);
-	} catch (error) {
-		console.error(
-			`LRCLIB: lyrics for artist: "${artist}" and track: "${title}" not found`,
-			error
-		);
-		throw new Error('Lyrics not found');
+		const lyricsText = await getLyricsTextFromLrclib(title, [artist ?? '']);
+		return buildLyricsFromText(lyricsText, {
+			songTitle: title,
+			songImage: '',
+			songArtist: artist ?? '',
+			songArtistNames: artist ?? '',
+		});
+	} catch {
+		// Genius scrapes HTML and is often blocked from Vercel — use only as fallback.
 	}
 
-	return buildLyricsFromText(lyricsText, {
-		songTitle,
-		songImage,
-		songArtist,
-		songArtistNames,
-	});
+	if (process.env.VERCEL !== '1') {
+		const geniusLyrics = await getGeniusLyrics(title, artist ?? '', {
+			songTitle: title,
+			songImage: '',
+			songArtist: artist ?? '',
+			songArtistNames: artist ?? '',
+		});
+
+		if (geniusLyrics) {
+			return geniusLyrics;
+		}
+	}
+
+	throw new Error('Lyrics not found');
 };

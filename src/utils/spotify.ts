@@ -17,7 +17,26 @@ type Track = {
 	preview_url: string | null;
 	id: string;
 	external_urls: { spotify: string };
+	artists?: { name: string }[];
 };
+
+export type TrackResult = {
+	randomTrack: string;
+	previewUrl: string | null;
+	url: string;
+	id: string;
+	albumImage: string;
+	artistName: string;
+	artistNames: string;
+};
+
+export type ArtistContext = {
+	artistId: string;
+	artistName: string;
+	albums: Album[];
+};
+
+let cachedToken: { accessToken: string; expiresAt: number } | null = null;
 
 const isInstrumentalTrack = (trackName: string) =>
 	trackName.toLowerCase().includes('instrumental');
@@ -32,172 +51,159 @@ const pickRandomTrack = (tracks: Track[]) => {
 	return playableTracks[Math.floor(Math.random() * playableTracks.length)];
 };
 
-const toTrackResult = (track: Track) => ({
+const toTrackResult = (
+	track: Track,
+	album: Album,
+	fallbackArtistName: string
+): TrackResult => ({
 	randomTrack: track.name,
 	previewUrl: track.preview_url ?? null,
 	url: track.external_urls.spotify,
 	id: track.id,
+	albumImage: album.images[0]?.url ?? '',
+	artistName: track.artists?.[0]?.name ?? fallbackArtistName,
+	artistNames: track.artists?.map((artist) => artist.name).join(', ') ?? fallbackArtistName,
 });
 
-export const getAppToken = async () => {
-	try {
-		let myHeaders = new Headers();
-		myHeaders.append(
-			'Authorization',
-			'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64')
-		);
-		myHeaders.append('Content-Type', 'application/x-www-form-urlencoded');
-
-		const urlencoded = new URLSearchParams();
-		urlencoded.append('grant_type', 'client_credentials');
-
-		const response = await fetch('https://accounts.spotify.com/api/token', {
-			method: 'POST',
-			headers: myHeaders,
-			body: urlencoded,
-		});
-
-		if (!response.ok) console.error('ERROR: Request failed' + response.status);
-
-		const data = await response.json();
-
-		return data;
-	} catch (error) {
-		throw new Error('ERROR AT API CALL: getAppToken', { cause: error });
+const getAccessToken = async (): Promise<string> => {
+	const now = Date.now();
+	if (cachedToken && now < cachedToken.expiresAt - 60_000) {
+		return cachedToken.accessToken;
 	}
+
+	const response = await fetch('https://accounts.spotify.com/api/token', {
+		method: 'POST',
+		headers: {
+			Authorization:
+				'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'),
+			'Content-Type': 'application/x-www-form-urlencoded',
+		},
+		body: new URLSearchParams({ grant_type: 'client_credentials' }),
+	});
+
+	if (!response.ok) {
+		throw new Error(`Spotify token request failed: ${response.status}`);
+	}
+
+	const data = await response.json();
+	cachedToken = {
+		accessToken: data.access_token,
+		expiresAt: now + data.expires_in * 1000,
+	};
+
+	return cachedToken.accessToken;
 };
 
-export const getArtist = async (artistId: string) => {
-	try {
-		const token = await getAppToken();
+const spotifyFetch = async <T>(url: string): Promise<T> => {
+	const token = await getAccessToken();
+	const response = await fetch(url, {
+		headers: {
+			Accept: 'application/json',
+			Authorization: `Bearer ${token}`,
+		},
+	});
 
-		const response = await fetch(
-			`https://api.spotify.com/v1/artists/${artistId}`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json',
-					ContentType: 'application/json',
-					Authorization: `Bearer ${token.access_token}`,
-				},
-			}
-		);
-
-		if (!response.ok) console.error('ERROR: Request failed' + response.status);
-
-		const data = await response.json();
-		return data;
-	} catch (error) {
-		throw new Error('ERROR AT API CALL: getArtist', { cause: error });
+	if (!response.ok) {
+		throw new Error(`Spotify request failed: ${response.status} ${url}`);
 	}
+
+	return response.json();
+};
+
+const filterAlbums = (albums: Album[]) =>
+	albums.filter(
+		(album) =>
+			album.total_tracks > 1 &&
+			album.album_type === 'album' &&
+			album.album_group === 'album' &&
+			!album.name.toLowerCase().includes('instrumental')
+	);
+
+export const getArtist = async (artistId: string) => {
+	return spotifyFetch(`https://api.spotify.com/v1/artists/${artistId}`);
 };
 
 export const getAllArtistAlbums = async (artistId: string) => {
-	try {
-		const token = await getAppToken();
-
-		const response = await fetch(
-			`https://api.spotify.com/v1/artists/${artistId}/albums?limit=50`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json',
-					ContentType: 'application/json',
-					Authorization: `Bearer ${token.access_token}`,
-				},
-			}
-		);
-
-		if (!response.ok)
-			console.error('ERROR: Request failed with status: ' + response.status);
-
-		const data = await response.json();
-		return data.items;
-	} catch (error) {
-		throw new Error('ERROR AT API CALL: getAllArtistAlbums', { cause: error });
-	}
+	const data = await spotifyFetch<{ items: Album[] }>(
+		`https://api.spotify.com/v1/artists/${artistId}/albums?limit=50`
+	);
+	return data.items;
 };
 
 export const getAlbumTracks = async (albumId: string) => {
-	try {
-		const token = await getAppToken();
-		const response = await fetch(
-			`https://api.spotify.com/v1/albums/${albumId}/tracks`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json',
-					ContentType: 'application/json',
-					Authorization: `Bearer ${token.access_token}`,
-				},
-			}
-		);
-
-		if (!response.ok) console.error('ERROR: Request failed' + response.status);
-
-		const data = await response.json();
-		return data.items;
-	} catch (error) {
-		throw new Error('ERROR AT API CALL: getAlbumTracks', { cause: error });
-	}
+	const data = await spotifyFetch<{ items: Track[] }>(
+		`https://api.spotify.com/v1/albums/${albumId}/tracks`
+	);
+	return data.items;
 };
 
 export const getArtistId = async (artistName: string, market?: string) => {
-	try {
-		const token = await getAppToken();
-		const response = await fetch(
-			`https://api.spotify.com/v1/search?query=${artistName}&type=artist${
-				market ? `&market=${market}` : ''
-			}&locale=pl-PL%2Cpl%3Bq%3D0.9%2Cen-US%3Bq%3D0.8%2Cen%3Bq%3D0.7&offset=0&limit=20`,
-			{
-				method: 'GET',
-				headers: {
-					Accept: 'application/json',
-					ContentType: 'application/json',
-					Authorization: `Bearer ${token.access_token}`,
-				},
-			}
-		);
+	const data = await spotifyFetch<{
+		artists: { items: { id: string; name: string }[] };
+	}>(
+		`https://api.spotify.com/v1/search?query=${encodeURIComponent(artistName)}&type=artist${
+			market ? `&market=${market}` : ''
+		}&limit=1`
+	);
 
-		if (!response.ok) console.error('ERROR: Request failed' + response.status);
-
-		const data = await response.json();
-
-		let artists = data.artists.items;
-
-		return artists[0].id;
-	} catch (error) {
-		throw new Error('ERROR AT API CALL: getArtistId', { cause: error });
+	const artist = data.artists.items[0];
+	if (!artist) {
+		throw new Error(`Artist not found: ${artistName}`);
 	}
+
+	return artist.id;
 };
 
+export const prepareArtistContext = async (
+	artistName: string,
+	market?: string
+): Promise<ArtistContext> => {
+	const data = await spotifyFetch<{
+		artists: { items: { id: string; name: string }[] };
+	}>(
+		`https://api.spotify.com/v1/search?query=${encodeURIComponent(artistName)}&type=artist${
+			market ? `&market=${market}` : ''
+		}&limit=1`
+	);
+
+	const artist = data.artists.items[0];
+	if (!artist) {
+		throw new Error(`Artist not found: ${artistName}`);
+	}
+
+	const albums = filterAlbums(await getAllArtistAlbums(artist.id));
+	if (!albums.length) {
+		throw new Error(`No albums found for artist: ${artistName}`);
+	}
+
+	return {
+		artistId: artist.id,
+		artistName: artist.name,
+		albums,
+	};
+};
+
+export const getRandomTrackFromContext = async (
+	context: ArtistContext
+): Promise<TrackResult> => {
+	const randomAlbum = context.albums[Math.floor(Math.random() * context.albums.length)];
+	const tracks = await getAlbumTracks(randomAlbum.id);
+	const randomTrack = pickRandomTrack(tracks);
+
+	return toTrackResult(randomTrack, randomAlbum, context.artistName);
+};
+
+/** @deprecated Use prepareArtistContext + getRandomTrackFromContext */
+export const getAppToken = async () => {
+	const accessToken = await getAccessToken();
+	return { access_token: accessToken, expires_in: 3600 };
+};
+
+/** @deprecated Use prepareArtistContext + getRandomTrackFromContext */
 export const getRandomArtistTrack = async (
 	artistName: string,
 	market?: string
 ) => {
-	try {
-		let artistId: string = await getArtistId(artistName, market);
-
-		let albums: Album[] = await getAllArtistAlbums(artistId);
-
-		albums = albums.filter(
-			(album) =>
-				album.total_tracks > 1 &&
-				album.name.toLowerCase().indexOf('instrumental') === -1
-		);
-
-		albums = albums.filter((album) => album.album_type == 'album');
-		albums = albums.filter((album) => album.album_group == 'album');
-
-		const randomAlbum = albums[Math.floor(Math.random() * albums.length)];
-
-		let tracks: Track[] = await getAlbumTracks(randomAlbum.id);
-		const randomTrack = pickRandomTrack(tracks);
-
-		return toTrackResult(randomTrack);
-	} catch (error) {
-		throw new Error('ERROR AT API CALL: getRandomArtistTrack', {
-			cause: error,
-		});
-	}
+	const context = await prepareArtistContext(artistName, market);
+	return getRandomTrackFromContext(context);
 };
