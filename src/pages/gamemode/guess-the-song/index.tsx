@@ -14,8 +14,9 @@ import Footer from '@/components/ui/Footer';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/pages/api/auth/[...nextauth]';
 import LoadingFullScreen from '@/components/ui/LoadingFullScreen';
+import { sanitizeForPageProps } from '@/utils/serialize';
 
-export default function Guess({ song, error }: { song: Song; error?: string }) {
+export default function Guess({ song, error }: { song?: Song; error?: string }) {
 	const router = useRouter();
 
 	const [time, setTime] = useState(5);
@@ -46,6 +47,10 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
 
+		if (!song) {
+			return;
+		}
+
 		const sim = stringSim.compareTwoStrings(guess.toUpperCase(), song.songTitle.toUpperCase());
 
 		if (sim >= 0.75) {
@@ -69,6 +74,30 @@ export default function Guess({ song, error }: { song: Song; error?: string }) {
 					<div className="flex flex-col items-center">
 						<div className="mb-4 text-center text-xl font-bold md:text-3xl">Error:</div>
 						<div className="mb-2 text-center text-base font-semibold md:text-xl">{error}</div>
+						<div className="flex gap-4">
+							<button
+								onClick={() => {
+									setIsLoading(true);
+									router.reload();
+								}}
+								className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+							>
+								Try again
+							</button>
+							<button
+								onClick={() => router.push('/')}
+								className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
+							>
+								Back
+							</button>
+						</div>
+					</div>
+				) : !song ? (
+					<div className="flex flex-col items-center">
+						<div className="mb-4 text-center text-xl font-bold md:text-3xl">Error:</div>
+						<div className="mb-2 text-center text-base font-semibold md:text-xl">
+							Something went wrong - try again later
+						</div>
 						<div className="flex gap-4">
 							<button
 								onClick={() => {
@@ -263,7 +292,13 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 	try {
 		let i = 3;
-		let randomSong: { randomTrack: string; previewUrl: string; url: string; id: string; artist: string };
+		let randomSong: {
+			randomTrack: string;
+			previewUrl: string | null;
+			url: string;
+			id: string;
+			artist: string;
+		};
 
 		let lyricsObj: Lyrics | null;
 
@@ -304,11 +339,16 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 			}
 		} while (!lyricsObj);
 
-		let songObj: Song = { ...lyricsObj, previewUrl: randomSong.previewUrl, url: randomSong.url, id: randomSong.id };
+		let songObj: Song = {
+			...lyricsObj,
+			previewUrl: randomSong.previewUrl ?? null,
+			url: randomSong.url,
+			id: randomSong.id,
+		};
 
 		return {
 			props: {
-				song: songObj,
+				song: sanitizeForPageProps(songObj),
 			},
 		};
 	} catch (error) {
