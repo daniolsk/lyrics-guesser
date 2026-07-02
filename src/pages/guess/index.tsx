@@ -1,422 +1,389 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from "react";
 
-import Image from 'next/image';
-import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { GetServerSideProps } from 'next';
-import stringSim from 'string-similarity';
-import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { GetServerSideProps } from "next";
+import stringSim from "string-similarity";
+import { AiOutlineInfoCircle, AiFillQuestionCircle } from "react-icons/ai";
 
-import { logRequest } from '@/utils/requestLog';
-import { getLyricsForTrack, isValidLyrics } from '@/utils/lyrics';
-import {
-	ArtistContext,
-	getRandomTrackFromContext,
-	prepareArtistContext,
-	TrackResult,
-} from '@/utils/spotify';
-import { Lyrics, Song } from '@/utils/types';
-import Footer from '@/components/ui/Footer';
-import LoadingFullScreen from '@/components/ui/LoadingFullScreen';
-import { sanitizeForPageProps } from '@/utils/serialize';
+import { Song } from "@/utils/types";
+import Footer from "@/components/ui/Footer";
+import Loading from "@/components/ui/Loading";
 
-export default function Guess({ song, error }: { song?: Song; error?: string }) {
-	const router = useRouter();
+export default function Guess() {
+  const router = useRouter();
+  const { artist, market } = router.query;
 
-	const [time, setTime] = useState(5);
-	const [allowNext, setAllowNext] = useState(false);
-	const [guess, setGuess] = useState('');
-	const [isGuessed, setIsGuessed] = useState(false);
-	const [isCorrect, setIsCorrect] = useState<Boolean>();
-	const [isLoading, setIsLoading] = useState(false);
-	const [showImg, setShowImg] = useState(false);
-	const [showNextVerses, setShowNextVerses] = useState(false);
+  const [song, setSong] = useState<Song>();
+  const [error, setError] = useState<string>();
+  const [isLoading, setIsLoading] = useState(true);
 
-	useEffect(() => {
-		let i = setInterval(() => {
-			setTime((time) => {
-				if (time - 1 <= 0) {
-					clearInterval(i);
-					setAllowNext(true);
-				}
-				return time - 1;
-			});
-		}, 1000);
+  const [time, setTime] = useState(5);
+  const [allowNext, setAllowNext] = useState(false);
+  const [guess, setGuess] = useState("");
+  const [isGuessed, setIsGuessed] = useState(false);
+  const [isCorrect, setIsCorrect] = useState<Boolean>();
+  const [showImg, setShowImg] = useState(false);
+  const [showNextVerses, setShowNextVerses] = useState(false);
 
-		return () => {
-			clearInterval(i);
-		};
-	}, []);
+  const resetGameState = useCallback(() => {
+    setTime(5);
+    setAllowNext(false);
+    setGuess("");
+    setIsGuessed(false);
+    setIsCorrect(undefined);
+    setShowImg(false);
+    setShowNextVerses(false);
+  }, []);
 
-	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
-		e.preventDefault();
+  const fetchSong = useCallback(async () => {
+    if (!artist || typeof artist !== "string") {
+      return;
+    }
 
-		if (!song) {
-			return;
-		}
+    setIsLoading(true);
+    setError(undefined);
+    setSong(undefined);
+    resetGameState();
 
-		const sim = stringSim.compareTwoStrings(
-			guess.toUpperCase(),
-			song.songTitle.toUpperCase()
-		);
+    try {
+      const params = new URLSearchParams({ artist });
+      if (market && typeof market === "string") {
+        params.set("market", market);
+      }
 
-		if (sim >= 0.75) {
-			setIsCorrect(true);
-		} else {
-			setIsCorrect(false);
-		}
+      const response = await fetch(`/api/guess?${params.toString()}`);
+      const data = await response.json();
 
-		setIsGuessed(true);
-	};
+      if (!response.ok) {
+        setError(data.error ?? "Something went wrong - try again later");
+        return;
+      }
 
-	return (
-		<div
-			className={`length:160rem flex min-h-[100svh] flex-col justify-between bg-[url('/bg.svg')] bg-top bg-repeat ${
-				isGuessed ? `${isCorrect ? 'bg-green-1000' : 'bg-red-1000'}` : ''
-			}`}
-		>
-			<LoadingFullScreen show={isLoading} />
-			<main className='flex flex-1 flex-col items-center justify-center p-5 pb-0'>
-				{error ? (
-					<div className='flex flex-col items-center'>
-						<div className='mb-4 text-center text-xl font-bold md:text-3xl'>
-							Error:
-						</div>
-						<div className='mb-2 text-center text-base font-semibold md:text-xl'>
-							{error}
-						</div>
-						<div className='flex gap-4'>
-							<button
-								onClick={() => {
-									setIsLoading(true);
-									router.reload();
-								}}
-								className='mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500'
-							>
-								Try again
-							</button>
-							<button
-								onClick={() => router.push('/')}
-								className='mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500'
-							>
-								Back
-							</button>
-						</div>
-					</div>
-				) : !song ? (
-					<div className='flex flex-col items-center'>
-						<div className='mb-4 text-center text-xl font-bold md:text-3xl'>
-							Error:
-						</div>
-						<div className='mb-2 text-center text-base font-semibold md:text-xl'>
-							Something went wrong - try again later
-						</div>
-						<div className='flex gap-4'>
-							<button
-								onClick={() => {
-									setIsLoading(true);
-									router.reload();
-								}}
-								className='mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500'
-							>
-								Try again
-							</button>
-							<button
-								onClick={() => router.push('/')}
-								className='mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500'
-							>
-								Back
-							</button>
-						</div>
-					</div>
-				) : (
-					<div className='flex w-full flex-col items-center'>
-						<div className='mb-6 hidden items-center justify-center md:flex '>
-							<h1 className='ml-2 flex items-center text-2xl font-semibold'>
-								<AiOutlineInfoCircle className='mr-2' size={28} />
-								Guess the song title
-							</h1>
-						</div>
-						{isGuessed ? (
-							<Link
-								href={song.url}
-								target='_blank'
-								className='mb-10 mt-4 bg-gray-1000'
-							>
-								<div
-									className='relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72'
-									onClick={() => setShowImg(true)}
-								>
-									<Image
-										fill
-										onContextMenu={(e) => e.preventDefault()}
-										src={song.songImage}
-										priority
-										quality={75}
-										sizes='(max-width: 768px) 100vw,
+      setSong(data.song);
+    } catch {
+      setError("Something went wrong - try again later");
+    } finally {
+      setIsLoading(false);
+    }
+  }, [artist, market, resetGameState]);
+
+  useEffect(() => {
+    if (!router.isReady) {
+      return;
+    }
+
+    if (!artist) {
+      router.replace("/");
+      return;
+    }
+
+    fetchSong();
+  }, [router.isReady, artist, market, fetchSong, router]);
+
+  useEffect(() => {
+    if (!song) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setTime((currentTime) => {
+        if (currentTime - 1 <= 0) {
+          clearInterval(interval);
+          setAllowNext(true);
+        }
+        return currentTime - 1;
+      });
+    }, 1000);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [song?.id]);
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
+    if (!song) {
+      return;
+    }
+
+    const sim = stringSim.compareTwoStrings(
+      guess.toUpperCase(),
+      song.songTitle.toUpperCase(),
+    );
+
+    if (sim >= 0.75) {
+      setIsCorrect(true);
+    } else {
+      setIsCorrect(false);
+    }
+
+    setIsGuessed(true);
+  };
+
+  const showLoading = !router.isReady || isLoading;
+
+  return (
+    <div
+      className={`length:160rem flex min-h-[100svh] flex-col justify-between bg-[url('/bg.svg')] bg-top bg-repeat ${
+        isGuessed ? `${isCorrect ? "bg-green-1000" : "bg-red-1000"}` : ""
+      }`}
+    >
+      <main className="flex flex-1 flex-col items-center justify-center p-5 pb-0">
+        {showLoading ? (
+          <div className="flex flex-col items-center">
+            <div className="mb-6 hidden items-center justify-center md:flex">
+              <h1 className="ml-2 flex items-center text-2xl font-semibold">
+                <AiOutlineInfoCircle className="mr-2" size={28} />
+                Guess the song title
+              </h1>
+            </div>
+            <Loading />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center">
+            <div className="mb-4 text-center text-xl font-bold md:text-3xl">
+              Error:
+            </div>
+            <div className="mb-2 text-center text-base font-semibold md:text-xl">
+              {error}
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={fetchSong}
+                className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-500 disabled:text-gray-500"
+              >
+                Try again
+              </button>
+              <button
+                onClick={() => router.push("/")}
+                className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-500 disabled:text-gray-500"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        ) : !song ? (
+          <div className="flex flex-col items-center">
+            <div className="mb-4 text-center text-xl font-bold md:text-3xl">
+              Error:
+            </div>
+            <div className="mb-2 text-center text-base font-semibold md:text-xl">
+              Something went wrong - try again later
+            </div>
+            <div className="flex gap-4">
+              <button
+                onClick={fetchSong}
+                className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-500 disabled:text-gray-500"
+              >
+                Try again
+              </button>
+              <button
+                onClick={() => router.push("/")}
+                className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-500 disabled:text-gray-500"
+              >
+                Back
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex w-full flex-col items-center">
+            <div className="mb-6 hidden items-center justify-center md:flex ">
+              <h1 className="ml-2 flex items-center text-2xl font-semibold">
+                <AiOutlineInfoCircle className="mr-2" size={28} />
+                Guess the song title
+              </h1>
+            </div>
+            {isGuessed ? (
+              <Link
+                href={song.url}
+                target="_blank"
+                className="mb-10 mt-4 bg-gray-1000"
+              >
+                <div
+                  className="relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72"
+                  onClick={() => setShowImg(true)}
+                >
+                  <Image
+                    fill
+                    onContextMenu={(e) => e.preventDefault()}
+                    src={song.songImage}
+                    priority
+                    quality={75}
+                    sizes="(max-width: 768px) 100vw,
 										(max-width: 1200px) 50vw,
-										33vw'
-										alt='song image'
-										className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]`}
-									/>
-								</div>
-							</Link>
-						) : (
-							<div
-								className='relative mb-10 mt-4 h-60 w-60 bg-gray-1000 p-4 sm:h-72 sm:w-72'
-								onClick={() => setShowImg(true)}
-							>
-								{showImg ? (
-									''
-								) : (
-									<div className=' absolute left-0 top-0 z-10 flex h-full w-full cursor-pointer items-center justify-center bg-transparent fill-gray-300 font-semibold text-gray-300 hover:fill-gray-100 hover:text-gray-100 md:text-base'>
-										<div className='flex items-center text-inherit drop-shadow-[2px_5px_5px_rgb(0,0,0)]'>
-											<AiFillQuestionCircle
-												className='mr-2 fill-inherit'
-												size={18}
-											/>
-											Show image
-										</div>
-									</div>
-								)}
-								<Image
-									fill
-									onContextMenu={(e) => e.preventDefault()}
-									src={song.songImage}
-									priority
-									quality={75}
-									sizes='(max-width: 768px) 100vw,
+										33vw"
+                    alt="song image"
+                    className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]`}
+                  />
+                </div>
+              </Link>
+            ) : (
+              <div
+                className="relative mb-10 mt-4 h-60 w-60 bg-gray-1000 p-4 sm:h-72 sm:w-72"
+                onClick={() => setShowImg(true)}
+              >
+                {showImg ? (
+                  ""
+                ) : (
+                  <div className=" absolute left-0 top-0 z-10 flex h-full w-full cursor-pointer items-center justify-center bg-transparent fill-gray-300 font-semibold text-gray-300 hover:fill-gray-100 hover:text-gray-100 md:text-base">
+                    <div className="flex items-center text-inherit drop-shadow-[2px_5px_5px_rgb(0,0,0)]">
+                      <AiFillQuestionCircle
+                        className="mr-2 fill-inherit"
+                        size={18}
+                      />
+                      Show image
+                    </div>
+                  </div>
+                )}
+                <Image
+                  fill
+                  onContextMenu={(e) => e.preventDefault()}
+                  src={song.songImage}
+                  priority
+                  quality={75}
+                  sizes="(max-width: 768px) 100vw,
 									(max-width: 1200px) 50vw,
-									33vw'
-									alt='song image'
-									className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
-										isGuessed || showImg ? `` : `blur-[14px] grayscale`
-									}`}
-								/>
-							</div>
-						)}
-						<div className='mb-6 text-center font-semibold italic'>
-							<div className='text-base sm:text-lg md:text-xl'>
-								&quot;{song.firstVerse}
-							</div>
-							<div className='text-base sm:text-lg md:text-xl'>
-								{song.secondVerse}
-								{showNextVerses ? '' : '"'}
-							</div>
-							{showNextVerses ? (
-								<>
-									{song.nextVerses.map((verse, index) => (
-										<div
-											key={index}
-											className='text-base sm:text-lg md:text-xl'
-										>
-											{verse}
-											{index == 1 ? '"' : ''}
-										</div>
-									))}
-								</>
-							) : (
-								<button
-									className='mt-2 flex w-full cursor-pointer items-center justify-center fill-gray-300 text-sm text-gray-300 hover:fill-gray-200 hover:text-gray-200 md:text-base'
-									onClick={() => setShowNextVerses(true)}
-								>
-									<span className='flex items-center text-inherit'>
-										<AiFillQuestionCircle
-											className='mr-2 fill-inherit'
-											size={18}
-										/>
-										Show next two verses
-									</span>
-								</button>
-							)}
-						</div>
-						{isGuessed ? (
-							<div>
-								<div className='my-2 flex flex-col items-center'>
-									<div className='mb-1 text-center text-3xl font-bold md:text-4xl'>
-										&quot;{song.songTitle}&quot;
-									</div>
-									<div className='mb-2 flex justify-center text-base font-semibold md:text-lg'>
-										{' '}
-										by{' '}
-										{song.songArtistNames
-											? song.songArtistNames
-											: song.songArtist}
-									</div>
-								</div>
-							</div>
-						) : (
-							<form
-								className='flex flex-col items-center'
-								onSubmit={(e) => handleSubmit(e)}
-							>
-								<input
-									type='text'
-									className='mb-2 border-b-2 bg-transparent p-2 text-center text-2xl font-semibold focus:outline-none active:outline-none md:text-3xl'
-									value={guess}
-									spellCheck={false}
-									onChange={(e) => setGuess(e.target.value)}
-								/>
-								<div className='mb-2 flex justify-center text-base font-semibold md:text-lg'>
-									{' '}
-									by{' '}
-									{song.songArtistNames
-										? song.songArtistNames
-										: song.songArtist}
-								</div>
-								<div className='flex gap-4'>
-									<input
-										disabled={isGuessed || guess.length == 0}
-										value='Check'
-										type='submit'
-										className='mb-4 mt-4 cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-400 disabled:text-gray-400'
-									/>
-									<input
-										value='Give up'
-										type='button'
-										onClick={(e) => {
-											e.preventDefault();
+									33vw"
+                  alt="song image"
+                  className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)] ${
+                    isGuessed || showImg ? `` : `blur-[14px] grayscale`
+                  }`}
+                />
+              </div>
+            )}
+            <div className="mb-6 text-center font-semibold italic">
+              <div className="text-base sm:text-lg md:text-xl">
+                &quot;{song.firstVerse}
+              </div>
+              <div className="text-base sm:text-lg md:text-xl">
+                {song.secondVerse}
+                {showNextVerses ? "" : '"'}
+              </div>
+              {showNextVerses ? (
+                <>
+                  {song.nextVerses.map((verse, index) => (
+                    <div
+                      key={index}
+                      className="text-base sm:text-lg md:text-xl"
+                    >
+                      {verse}
+                      {index == 1 ? '"' : ""}
+                    </div>
+                  ))}
+                </>
+              ) : (
+                <button
+                  className="mt-2 flex w-full cursor-pointer items-center justify-center fill-gray-300 text-sm text-gray-300 hover:fill-gray-200 hover:text-gray-200 md:text-base"
+                  onClick={() => setShowNextVerses(true)}
+                >
+                  <span className="flex items-center text-inherit">
+                    <AiFillQuestionCircle
+                      className="mr-2 fill-inherit"
+                      size={18}
+                    />
+                    Show next two verses
+                  </span>
+                </button>
+              )}
+            </div>
+            {isGuessed ? (
+              <div>
+                <div className="my-2 flex flex-col items-center">
+                  <div className="mb-1 text-center text-3xl font-bold md:text-4xl">
+                    &quot;{song.songTitle}&quot;
+                  </div>
+                  <div className="mb-2 flex justify-center text-base font-semibold md:text-lg">
+                    {" "}
+                    by{" "}
+                    {song.songArtistNames
+                      ? song.songArtistNames
+                      : song.songArtist}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <form
+                className="flex flex-col items-center"
+                onSubmit={(e) => handleSubmit(e)}
+              >
+                <input
+                  type="text"
+                  className="mb-2 border-b-2 bg-transparent p-2 text-center text-2xl font-semibold focus:outline-none active:outline-none md:text-3xl"
+                  value={guess}
+                  spellCheck={false}
+                  onChange={(e) => setGuess(e.target.value)}
+                />
+                <div className="mb-2 flex justify-center text-base font-semibold md:text-lg">
+                  {" "}
+                  by{" "}
+                  {song.songArtistNames
+                    ? song.songArtistNames
+                    : song.songArtist}
+                </div>
+                <div className="flex gap-4">
+                  <input
+                    disabled={isGuessed || guess.length == 0}
+                    value="Check"
+                    type="submit"
+                    className="mb-4 mt-4 cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-400 disabled:text-gray-400"
+                  />
+                  <input
+                    value="Give up"
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
 
-											setIsCorrect(false);
-											setIsGuessed(true);
-										}}
-										className='mb-4 mt-4 cursor-pointer border-2 border-red-600 bg-gray-1000 px-4 py-2 text-lg font-semibold text-red-600 hover:enabled:bg-red-600 hover:enabled:text-black disabled:border-red-900 disabled:text-red-900'
-									/>
-								</div>
-							</form>
-						)}
-						{isGuessed ? (
-							<>
-								<div className='mb-4 flex gap-4'>
-									<button
-										disabled={!allowNext || isLoading}
-										onClick={() => {
-											setIsLoading(true);
-											router.reload();
-										}}
-										className='mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-400 disabled:text-gray-400'
-									>
-										Try again {time > 0 ? `(${time})` : ''}
-									</button>
-									<button
-										onClick={() => router.push('/')}
-										className='mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-400 disabled:text-gray-400'
-									>
-										Back
-									</button>
-								</div>
-							</>
-						) : (
-							''
-						)}
-					</div>
-				)}
-			</main>
-			<Footer />
-		</div>
-	);
+                      setIsCorrect(false);
+                      setIsGuessed(true);
+                    }}
+                    className="mb-4 mt-4 cursor-pointer border-2 border-red-600 bg-gray-1000 px-4 py-2 text-lg font-semibold text-red-600 hover:enabled:bg-red-600 hover:enabled:text-black! disabled:border-red-900 disabled:text-red-900"
+                  />
+                </div>
+              </form>
+            )}
+            {isGuessed ? (
+              <>
+                <div className="mb-4 flex gap-4">
+                  <button
+                    disabled={!allowNext || isLoading}
+                    onClick={fetchSong}
+                    className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-400 disabled:text-gray-400"
+                  >
+                    Try again {time > 0 ? `(${time})` : ""}
+                  </button>
+                  <button
+                    onClick={() => router.push("/")}
+                    className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-400 disabled:text-gray-400"
+                  >
+                    Back
+                  </button>
+                </div>
+              </>
+            ) : (
+              ""
+            )}
+          </div>
+        )}
+      </main>
+      <Footer />
+    </div>
+  );
 }
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-	if (!context.query.artist) {
-		return {
-			redirect: {
-				destination: '/',
-			},
-			props: {},
-		};
-	}
+  if (!context.query.artist) {
+    return {
+      redirect: {
+        destination: "/",
+      },
+      props: {},
+    };
+  }
 
-	let artist = context.query.artist as string;
-
-	let market = context.query.market
-		? (context.query.market as string)
-		: undefined;
-
-	const requestStartedAt = Date.now();
-	logRequest('Guess', `GET /guess?artist=${artist}`, requestStartedAt, {
-		status: 'start',
-	});
-
-	try {
-		const artistContext: ArtistContext = await prepareArtistContext(artist, market);
-		let randomSong: TrackResult | null = null;
-		let lyricsObj: Lyrics | null = null;
-		let attempts = 0;
-
-		let nextTrackPromise = getRandomTrackFromContext(artistContext);
-
-		for (let attempt = 0; attempt < 3 && !lyricsObj; attempt++) {
-			attempts = attempt + 1;
-			const attemptStartedAt = Date.now();
-			const track = await nextTrackPromise;
-			nextTrackPromise = getRandomTrackFromContext(artistContext);
-			logRequest('Guess', `attempt ${attempt + 1} track`, attemptStartedAt, {
-				status: 'ok',
-				track: track.randomTrack,
-			});
-
-			try {
-				const lyrics = await getLyricsForTrack(track.randomTrack, artist, {
-					songTitle: track.randomTrack,
-					songImage: track.albumImage,
-					songArtist: track.artistName,
-					songArtistNames: track.artistNames,
-				});
-
-				if (isValidLyrics(lyrics)) {
-					randomSong = track;
-					lyricsObj = lyrics;
-					logRequest('Guess', `attempt ${attempt + 1} lyrics`, attemptStartedAt, {
-						status: 'ok',
-						song: lyrics.songTitle,
-					});
-				}
-			} catch (error) {
-				logRequest('Guess', `attempt ${attempt + 1} lyrics`, attemptStartedAt, {
-					status: 'error',
-					track: track.randomTrack,
-					error: error instanceof Error ? error.message : String(error),
-				});
-			}
-		}
-
-		if (!lyricsObj || !randomSong) {
-			logRequest('Guess', `GET /guess?artist=${artist}`, requestStartedAt, {
-				status: 'error',
-				error: 'Lyrics not found',
-			});
-			throw new Error('Lyrics not found!');
-		}
-
-		let songObj: Song = {
-			...lyricsObj,
-			previewUrl: randomSong.previewUrl ?? null,
-			url: randomSong.url,
-			id: randomSong.id,
-		};
-
-		logRequest('Guess', `GET /guess?artist=${artist}`, requestStartedAt, {
-			status: 'ok',
-			song: songObj.songTitle,
-			attempts,
-		});
-
-		return {
-			props: {
-				song: sanitizeForPageProps(songObj),
-			},
-		};
-	} catch (error) {
-		logRequest('Guess', `GET /guess?artist=${artist}`, requestStartedAt, {
-			status: 'error',
-			error: error instanceof Error ? error.message : String(error),
-		});
-
-		return {
-			props: {
-				error: 'Something went wrong - try again later',
-			},
-		};
-	}
+  return {
+    props: {},
+  };
 };
