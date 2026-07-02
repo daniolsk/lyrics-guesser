@@ -7,7 +7,7 @@ import { GetServerSideProps } from 'next';
 import stringSim from 'string-similarity';
 import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
 
-import { getLyrics } from '@/utils/lyrics';
+import { getLyrics, isValidLyrics } from '@/utils/lyrics';
 import { getRandomArtistTrack } from '@/utils/spotify';
 import { Lyrics, Song } from '@/utils/types';
 import Footer from '@/components/ui/Footer';
@@ -312,18 +312,29 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
 			console.log('-------- SONG FOUND: ' + randomSong.url);
 
-			lyricsObj = await getLyrics(randomSong.randomTrack, artist);
+			lyricsObj = null;
+			try {
+				const lyrics = await getLyrics(randomSong.randomTrack, artist);
+				lyricsObj = isValidLyrics(lyrics) ? lyrics : null;
+			} catch (error) {
+				console.error(
+					`-------- LYRICS NOT FOUND FOR SONG: ${randomSong.randomTrack}`,
+					error
+				);
+			}
 
-			console.log(
-				'-------- LYRICS FOUND FOR SONG: ' +
-					lyricsObj?.songTitle +
-					' ' +
-					lyricsObj?.songArtistNames
-			);
+			if (lyricsObj) {
+				console.log(
+					'-------- LYRICS FOUND FOR SONG: ' +
+						lyricsObj.songTitle +
+						' ' +
+						lyricsObj.songArtistNames
+				);
+			}
 
 			i--;
 
-			if (i <= 0) {
+			if (i <= 0 && !lyricsObj) {
 				throw new Error('Lyrics not found!');
 			}
 		} while (!lyricsObj);
