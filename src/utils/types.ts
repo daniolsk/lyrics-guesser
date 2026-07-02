@@ -1,5 +1,5 @@
 export interface Song extends Lyrics {
-	previewUrl: string;
+	previewUrl: string | null;
 	url: string;
 	id: string;
 }

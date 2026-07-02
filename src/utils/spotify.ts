@@ -14,10 +14,30 @@ type Album = {
 
 type Track = {
 	name: string;
-	preview_url: string;
+	preview_url: string | null;
 	id: string;
 	external_urls: { spotify: string };
 };
+
+const isInstrumentalTrack = (trackName: string) =>
+	trackName.toLowerCase().includes('instrumental');
+
+const pickRandomTrack = (tracks: Track[]) => {
+	const playableTracks = tracks.filter((track) => !isInstrumentalTrack(track.name));
+
+	if (!playableTracks.length) {
+		throw new Error('No playable tracks found');
+	}
+
+	return playableTracks[Math.floor(Math.random() * playableTracks.length)];
+};
+
+const toTrackResult = (track: Track) => ({
+	randomTrack: track.name,
+	previewUrl: track.preview_url ?? null,
+	url: track.external_urls.spotify,
+	id: track.id,
+});
 
 type Artist = {
 	name: string;
@@ -274,11 +294,20 @@ export const getRandomSongFromUserLastTracks = async (
 			throw new Error(`Spotify: error finding tracks`);
 		}
 
-		const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+		const playableTracks = tracks.filter(
+			(track: { name: string }) => !isInstrumentalTrack(track.name)
+		);
+
+		if (!playableTracks.length) {
+			throw new Error(`Spotify: error finding tracks`);
+		}
+
+		const randomTrack =
+			playableTracks[Math.floor(Math.random() * playableTracks.length)];
 
 		return {
 			randomTrack: randomTrack.name,
-			previewUrl: randomTrack.preview_url,
+			previewUrl: randomTrack.preview_url ?? null,
 			url: randomTrack.external_urls.spotify,
 			id: randomTrack.id,
 			artist: randomTrack.artists[0].name,
@@ -323,14 +352,10 @@ export const getRandomSongFromUserLastArists = async (
 		const randomAlbum = albums[Math.floor(Math.random() * albums.length)];
 
 		let tracks: Track[] = await getAlbumTracks(randomAlbum.id);
-
-		const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
+		const randomTrack = pickRandomTrack(tracks);
 
 		return {
-			randomTrack: randomTrack.name,
-			previewUrl: randomTrack.preview_url,
-			url: randomTrack.external_urls.spotify,
-			id: randomTrack.id,
+			...toTrackResult(randomTrack),
 			artist: artistName,
 		};
 	} catch (error) {
@@ -401,7 +426,7 @@ export const getRandomArtistTrack = async (
 
 		let albums: Album[] = await getAllArtistAlbums(artistId);
 
-		albums.filter(
+		albums = albums.filter(
 			(album) =>
 				album.total_tracks > 1 &&
 				album.name.toLowerCase().indexOf('instrumental') === -1
@@ -413,15 +438,9 @@ export const getRandomArtistTrack = async (
 		const randomAlbum = albums[Math.floor(Math.random() * albums.length)];
 
 		let tracks: Track[] = await getAlbumTracks(randomAlbum.id);
+		const randomTrack = pickRandomTrack(tracks);
 
-		const randomTrack = tracks[Math.floor(Math.random() * tracks.length)];
-
-		return {
-			randomTrack: randomTrack.name,
-			previewUrl: randomTrack.preview_url,
-			url: randomTrack.external_urls.spotify,
-			id: randomTrack.id,
-		};
+		return toTrackResult(randomTrack);
 	} catch (error) {
 		throw new Error('ERROR AT API CALL: getRandomArtistTrack', {
 			cause: error,
