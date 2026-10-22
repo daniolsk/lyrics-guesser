@@ -52,7 +52,15 @@ const Footer = () => {
 			>
 				{count === undefined ? ' ' : `${count.toLocaleString('en-US')} songs played so far`}
 			</div>
-			Made with ❤️ by Daniel Skowron
+			Made with ❤️ by{' '}
+			<a
+				href="https://danielskowron.com"
+				target="_blank"
+				rel="noopener noreferrer"
+				className="underline-offset-4 hover:underline"
+			>
+				Daniel Skowron
+			</a>
 		</footer>
 	);
 };
