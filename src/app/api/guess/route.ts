@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 import { guessSong } from '@/utils/guessSong';
+import { incrementSongsPlayed } from '@/utils/stats';
 
 const MAX_SONG_KEYS = 50;
 const MAX_SONG_KEY_LENGTH = 200;
@@ -44,5 +45,11 @@ export async function GET(request: NextRequest) {
 		);
 	}
 
-	return NextResponse.json(result);
+	// The counter is a nice-to-have, so a database hiccup shouldn't cost the player their song.
+	const songsPlayed = await incrementSongsPlayed().catch((error) => {
+		console.error('Failed to increment the songs played counter', error);
+		return undefined;
+	});
+
+	return NextResponse.json({ ...result, songsPlayed });
 }

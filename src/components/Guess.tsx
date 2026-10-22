@@ -10,7 +10,7 @@ import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
 import { Song } from '@/utils/types';
 import { isCorrectGuess } from '@/utils/matchTitle';
 import { addNoLyricsSongs, addSeenSong, getNoLyricsSongs, getSeenSongs } from '@/utils/seenSongs';
-import Footer from '@/components/ui/Footer';
+import Footer, { SONGS_PLAYED_EVENT } from '@/components/ui/Footer';
 import Loading from '@/components/ui/Loading';
 
 const DEFAULT_ERROR = 'Something went wrong on our side. Try again in a moment.';
@@ -51,6 +51,9 @@ const requestSong = async (
 	}
 
 	if (response.ok && data?.song) {
+		if (typeof data.songsPlayed === 'number') {
+			window.dispatchEvent(new CustomEvent(SONGS_PLAYED_EVENT, { detail: data.songsPlayed }));
+		}
 		return { song: data.song };
 	}
 
