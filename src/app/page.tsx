@@ -1,6 +1,8 @@
+'use client';
+
 import { FormEvent, useState } from 'react';
 
-import { useRouter } from 'next/router';
+import { useRouter } from 'next/navigation';
 import Footer from '@/components/ui/Footer';
 
 export default function Home() {
@@ -10,10 +12,11 @@ export default function Home() {
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		router.push({
-			pathname: '/guess',
-			query: market.length > 0 ? { artist, market } : { artist },
-		});
+		const params = new URLSearchParams({ artist });
+		if (market.length > 0) {
+			params.set('market', market);
+		}
+		router.push(`/guess?${params.toString()}`);
 	};
 
 	return (

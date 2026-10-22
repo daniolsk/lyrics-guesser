@@ -1,3 +1,5 @@
+'use client';
+
 import { getLoadingText } from '@/utils/loadingTexts';
 import { useEffect, useState } from 'react';
 

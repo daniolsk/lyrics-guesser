@@ -1,9 +1,10 @@
+'use client';
+
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/router';
-import { GetServerSideProps } from 'next';
+import { useRouter } from 'next/navigation';
 import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
 
 import { Song } from '@/utils/types';
@@ -59,21 +60,7 @@ const requestSong = async (
 	return { error: response.status === 504 ? TIMEOUT_ERROR : DEFAULT_ERROR };
 };
 
-export default function GuessPage() {
-	const router = useRouter();
-	const { artist, market } = router.query;
-
-	if (!router.isReady || typeof artist !== 'string') {
-		return null;
-	}
-
-	const marketParam = typeof market === 'string' ? market : undefined;
-
-	// Remount on a new artist or market so the game starts from a fresh state.
-	return <Guess key={`${artist}|${marketParam ?? ''}`} artist={artist} market={marketParam} />;
-}
-
-function Guess({ artist, market }: { artist: string; market?: string }) {
+export default function Guess({ artist, market }: { artist: string; market?: string }) {
 	const router = useRouter();
 
 	const [song, setSong] = useState<Song>();
@@ -364,18 +351,3 @@ function Guess({ artist, market }: { artist: string; market?: string }) {
 		</div>
 	);
 }
-
-export const getServerSideProps: GetServerSideProps = async (context) => {
-	if (!context.query.artist) {
-		return {
-			redirect: {
-				destination: '/',
-			},
-			props: {},
-		};
-	}
-
-	return {
-		props: {},
-	};
-};
