@@ -1,5 +1,6 @@
 import { UserFacingError } from '@/utils/errors';
 import { logRequest, timed } from '@/utils/requestLog';
+import { levenshtein, normalize } from '@/utils/text';
 
 const clientId = process.env.SPOTIFY_CLIENT_ID;
 const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
@@ -157,6 +158,38 @@ export const getAlbumTracks = async (albumId: string) => {
 	return data.items;
 };
 
+const ARTIST_SEARCH_LIMIT = 5;
+// Share of characters that may differ between the typed and the found name,
+// so typos like "Eminme" still match Eminem.
+const ARTIST_NAME_MAX_DIFFERENCE = 0.34;
+const ARTIST_NAME_MIN_PARTIAL_LENGTH = 3;
+
+const compactArtistName = (name: string) => normalize(name).replace(/^the /, '').replace(/ /g, '');
+
+// Spotify search always returns its closest match, even for gibberish, so
+// reject artists whose name looks nothing like what the player typed.
+const isSimilarArtistName = (query: string, name: string) => {
+	const a = compactArtistName(query);
+	const b = compactArtistName(name);
+
+	if (!a || !b) {
+		return a === b;
+	}
+
+	if (
+		Math.min(a.length, b.length) >= ARTIST_NAME_MIN_PARTIAL_LENGTH &&
+		(a.includes(b) || b.includes(a))
+	) {
+		return true;
+	}
+
+	const maxDifference = Math.max(
+		1,
+		Math.floor(Math.max(a.length, b.length) * ARTIST_NAME_MAX_DIFFERENCE),
+	);
+	return levenshtein(a, b) <= maxDifference;
+};
+
 export const prepareArtistContext = async (
 	artistName: string,
 	market?: string,
@@ -167,7 +200,7 @@ export const prepareArtistContext = async (
 		}>(
 			`https://api.spotify.com/v1/search?query=${encodeURIComponent(artistName)}&type=artist${
 				market ? `&market=${encodeURIComponent(market)}` : ''
-			}&limit=1`,
+			}&limit=${ARTIST_SEARCH_LIMIT}`,
 		).catch((error) => {
 			if (market && error instanceof SpotifyRequestError && error.status === 400) {
 				throw new UserFacingError(
@@ -178,9 +211,17 @@ export const prepareArtistContext = async (
 			throw error;
 		});
 
-		const artist = data.artists.items[0];
+		// Names typed in another script (e.g. "Кино" for Kino) can't be compared
+		// letter by letter, so trust Spotify's top result for them.
+		const isLatinQuery = /[a-z]/.test(normalize(artistName));
+		const artist =
+			data.artists.items.find((item) => isSimilarArtistName(artistName, item.name)) ??
+			(isLatinQuery ? undefined : data.artists.items[0]);
 		if (!artist) {
-			throw new UserFacingError(`We couldn't find an artist called "${artistName}".`, 404);
+			throw new UserFacingError(
+				`We couldn't find an artist called "${artistName}". Check the spelling and try again.`,
+				404,
+			);
 		}
 
 		const albums = filterAlbums(await getAllArtistAlbums(artist.id));

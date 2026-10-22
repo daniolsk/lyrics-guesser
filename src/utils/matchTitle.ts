@@ -1,21 +1,12 @@
 import stringSim from 'string-similarity';
 
+import { levenshtein, normalize } from '@/utils/text';
+
 const SIMILARITY_THRESHOLD = 0.75;
 // Dice similarity is too harsh on short titles ("Hallo" vs "Hello" scores 0.5),
 // so short titles are matched by allowing a single typo instead.
 const SHORT_TITLE_MAX_LENGTH = 6;
 const SHORT_TITLE_MIN_LENGTH = 3;
-
-const normalize = (text: string) =>
-	text
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.toLowerCase()
-		.replace(/&/g, ' and ')
-		.replace(/['’`]/g, '')
-		.replace(/[!-\/:-@\[-^_{-~“”‘…–—¿¡«»]/g, ' ')
-		.replace(/\s+/g, ' ')
-		.trim();
 
 const stripSuffix = (title: string) => title.split(/\s[-–—]\s/)[0];
 
@@ -41,21 +32,6 @@ const getCandidates = (title: string) => {
 		.filter((candidate) => candidate.length > 0);
 
 	return candidates.filter((candidate, index) => candidates.indexOf(candidate) === index);
-};
-
-const levenshtein = (a: string, b: string) => {
-	let previous = Array.from({ length: b.length + 1 }, (_, i) => i);
-
-	for (let i = 1; i <= a.length; i++) {
-		const current = [i];
-		for (let j = 1; j <= b.length; j++) {
-			const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-			current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + cost);
-		}
-		previous = current;
-	}
-
-	return previous[b.length];
 };
 
 const matchesCandidate = (guess: string, candidate: string) => {
