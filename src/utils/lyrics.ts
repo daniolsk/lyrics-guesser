@@ -6,7 +6,8 @@ import { Lyrics } from '@/utils/types';
 
 const MIN_LYRIC_LINES = 4;
 const LRCLIB_TIMEOUT_MS = 6_000;
-const LRCLIB_RETRY_DELAY_MS = 500;
+// Waits before each retry; the service usually recovers within a second or two.
+const LRCLIB_RETRY_DELAYS_MS = [500, 1_500];
 const LRCLIB_USER_AGENT = 'lyrics-guesser/0.1.0 (https://guessthesong.vercel.app)';
 
 const isInstrumentalTitle = (title: string) => title.toLowerCase().includes('instrumental');
@@ -113,12 +114,12 @@ type LrclibResponse<T> = { status: 'ok'; data: T } | { status: 'not-found' } | {
 
 const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// LRCLIB is often briefly overloaded (503), so a failed request is retried once. Timeouts
+// LRCLIB is often briefly overloaded (503), so a failed request is retried twice. Timeouts
 // are not retried, as they already took long and the service is likely struggling.
 const lrclibRequest = async <T>(
 	path: string,
 	params: URLSearchParams,
-	retriesLeft = 1,
+	retriesLeft = LRCLIB_RETRY_DELAYS_MS.length,
 ): Promise<LrclibResponse<T>> => {
 	const startedAt = Date.now();
 	const label = `GET ${path}?${params}`;
@@ -143,7 +144,7 @@ const lrclibRequest = async <T>(
 				retriesLeft,
 			});
 			if (retriesLeft > 0 && (response.status === 429 || response.status >= 500)) {
-				await wait(LRCLIB_RETRY_DELAY_MS);
+				await wait(LRCLIB_RETRY_DELAYS_MS[LRCLIB_RETRY_DELAYS_MS.length - retriesLeft]);
 				return lrclibRequest(path, params, retriesLeft - 1);
 			}
 			return { status: 'error' };
@@ -160,7 +161,7 @@ const lrclibRequest = async <T>(
 			retriesLeft,
 		});
 		if (retriesLeft > 0 && !timedOut) {
-			await wait(LRCLIB_RETRY_DELAY_MS);
+			await wait(LRCLIB_RETRY_DELAYS_MS[LRCLIB_RETRY_DELAYS_MS.length - retriesLeft]);
 			return lrclibRequest(path, params, retriesLeft - 1);
 		}
 		return { status: 'error' };
