@@ -25,7 +25,7 @@ export default function Home() {
 				<main className="flex flex-1 flex-col items-center justify-center p-5">
 					<div className="mb-2 flex text-center text-4xl font-extrabold tracking-wide text-white md:mb-4 md:text-6xl">
 						<span className="py-2">Guess the&nbsp;</span>
-						<span className="background-animate bg-linear-to-r from-red-400 to-green-400 bg-clip-text py-2 text-transparent">
+						<span className="animate-background-scroll bg-linear-to-r from-red-400 to-green-400 bg-size-[500%] bg-clip-text py-2 text-transparent">
 							Song
 						</span>
 					</div>
@@ -33,7 +33,7 @@ export default function Home() {
 						<div className="mb-4 flex items-center justify-center">
 							<input
 								type="text"
-								className="border-b-2 bg-transparent p-2 text-center text-lg font-semibold focus:outline-none active:outline-none md:p-3 md:text-xl"
+								className="border-b-2 bg-transparent p-2 text-center text-lg font-semibold focus:outline-hidden active:outline-hidden md:p-3 md:text-xl"
 								placeholder="Artist name e.g. Eminem"
 								value={artist}
 								onChange={(e) => setArtist(e.target.value)}
@@ -56,7 +56,7 @@ export default function Home() {
 							</div>
 							<input
 								type="text"
-								className="w-16 border-b-2 bg-transparent p-2 text-center text-sm focus:outline-none active:outline-none"
+								className="w-16 border-b-2 bg-transparent p-2 text-center text-sm focus:outline-hidden active:outline-hidden"
 								placeholder="e.g. PL"
 								value={market}
 								maxLength={2}

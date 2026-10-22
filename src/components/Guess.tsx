@@ -188,13 +188,13 @@ export default function Guess({ artist, market }: { artist: string; market?: str
 						<div className="flex gap-4">
 							<button
 								onClick={fetchNextSong}
-								className="mt-4 mb-8 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-500 disabled:text-gray-500"
+								className="mt-4 mb-8 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 							>
 								Try again
 							</button>
 							<button
 								onClick={() => router.push('/')}
-								className="mt-4 mb-8 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-500 disabled:text-gray-500"
+								className="mt-4 mb-8 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500"
 							>
 								Back
 							</button>
@@ -234,7 +234,7 @@ export default function Guess({ artist, market }: { artist: string; market?: str
 									''
 								) : (
 									<div className="absolute top-0 left-0 z-10 flex h-full w-full cursor-pointer items-center justify-center bg-transparent fill-gray-300 font-semibold text-gray-300 hover:fill-gray-100 hover:text-gray-100 md:text-base">
-										<div className="flex items-center text-inherit drop-shadow-[2px_5px_5px_rgb(0,0,0)]">
+										<div className="flex items-center drop-shadow-[2px_5px_5px_rgb(0,0,0)]">
 											<AiFillQuestionCircle className="mr-2 fill-inherit" size={18} />
 											Show image
 										</div>
@@ -276,7 +276,7 @@ export default function Guess({ artist, market }: { artist: string; market?: str
 									className="mt-2 flex w-full cursor-pointer items-center justify-center fill-gray-300 text-sm text-gray-300 hover:fill-gray-200 hover:text-gray-200 md:text-base"
 									onClick={() => setShowNextVerses(true)}
 								>
-									<span className="flex items-center text-inherit">
+									<span className="flex items-center">
 										<AiFillQuestionCircle className="mr-2 fill-inherit" size={18} />
 										Show next two verses
 									</span>
@@ -299,7 +299,7 @@ export default function Guess({ artist, market }: { artist: string; market?: str
 							<form className="flex flex-col items-center" onSubmit={(e) => handleSubmit(e)}>
 								<input
 									type="text"
-									className="mb-2 border-b-2 bg-transparent p-2 text-center text-2xl font-semibold focus:outline-none active:outline-none md:text-3xl"
+									className="mb-2 border-b-2 bg-transparent p-2 text-center text-2xl font-semibold focus:outline-hidden active:outline-hidden md:text-3xl"
 									value={guess}
 									spellCheck={false}
 									onChange={(e) => setGuess(e.target.value)}
@@ -313,7 +313,7 @@ export default function Guess({ artist, market }: { artist: string; market?: str
 										disabled={isGuessed || guess.length === 0}
 										value="Check"
 										type="submit"
-										className="mt-4 mb-4 cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-400 disabled:text-gray-400"
+										className="mt-4 mb-4 cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-400 disabled:text-gray-400"
 									/>
 									<input
 										value="Give up"
@@ -324,7 +324,7 @@ export default function Guess({ artist, market }: { artist: string; market?: str
 											setIsCorrect(false);
 											setIsGuessed(true);
 										}}
-										className="mt-4 mb-4 cursor-pointer border-2 border-red-600 bg-gray-1000 px-4 py-2 text-lg font-semibold text-red-600 hover:enabled:bg-red-600 hover:enabled:text-black! disabled:border-red-900 disabled:text-red-900"
+										className="mt-4 mb-4 cursor-pointer border-2 border-red-600 bg-gray-1000 px-4 py-2 text-lg font-semibold text-red-600 hover:enabled:bg-red-600 hover:enabled:text-black disabled:border-red-900 disabled:text-red-900"
 									/>
 								</div>
 							</form>
@@ -335,13 +335,13 @@ export default function Guess({ artist, market }: { artist: string; market?: str
 									<button
 										disabled={!allowNext || isLoading}
 										onClick={fetchNextSong}
-										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-400 disabled:text-gray-400"
+										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-400 disabled:text-gray-400"
 									>
 										Try again {time > 0 ? `(${time})` : ''}
 									</button>
 									<button
 										onClick={() => router.push('/')}
-										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-400 disabled:text-gray-400"
+										className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-400 disabled:text-gray-400"
 									>
 										Back
 									</button>
