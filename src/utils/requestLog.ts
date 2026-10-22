@@ -4,7 +4,7 @@ export const logRequest = (
 	service: string,
 	label: string,
 	startedAt: number,
-	extra?: RequestLogExtra
+	extra?: RequestLogExtra,
 ) => {
 	const ms = Date.now() - startedAt;
 	const details = extra
@@ -21,7 +21,7 @@ export const timed = async <T>(
 	service: string,
 	label: string,
 	fn: () => Promise<T>,
-	extra?: (result: T) => RequestLogExtra
+	extra?: (result: T) => RequestLogExtra,
 ): Promise<T> => {
 	const startedAt = Date.now();
 

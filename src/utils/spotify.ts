@@ -40,8 +40,7 @@ export type ArtistContext = {
 
 let cachedToken: { accessToken: string; expiresAt: number } | null = null;
 
-const isInstrumentalTrack = (trackName: string) =>
-	trackName.toLowerCase().includes('instrumental');
+const isInstrumentalTrack = (trackName: string) => trackName.toLowerCase().includes('instrumental');
 
 const pickRandomTrack = (tracks: Track[]) => {
 	const playableTracks = tracks.filter((track) => !isInstrumentalTrack(track.name));
@@ -53,11 +52,7 @@ const pickRandomTrack = (tracks: Track[]) => {
 	return playableTracks[Math.floor(Math.random() * playableTracks.length)];
 };
 
-const toTrackResult = (
-	track: Track,
-	album: Album,
-	fallbackArtistName: string
-): TrackResult => ({
+const toTrackResult = (track: Track, album: Album, fallbackArtistName: string): TrackResult => ({
 	randomTrack: track.name,
 	previewUrl: track.preview_url ?? null,
 	url: track.external_urls.spotify,
@@ -78,8 +73,7 @@ const getAccessToken = async (): Promise<string> => {
 	const response = await fetch('https://accounts.spotify.com/api/token', {
 		method: 'POST',
 		headers: {
-			Authorization:
-				'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'),
+			Authorization: 'Basic ' + Buffer.from(`${clientId}:${clientSecret}`).toString('base64'),
 			'Content-Type': 'application/x-www-form-urlencoded',
 		},
 		body: new URLSearchParams({ grant_type: 'client_credentials' }),
@@ -128,26 +122,26 @@ const filterAlbums = (albums: Album[]) =>
 			album.total_tracks > 1 &&
 			album.album_type === 'album' &&
 			album.album_group === 'album' &&
-			!album.name.toLowerCase().includes('instrumental')
+			!album.name.toLowerCase().includes('instrumental'),
 	);
 
 export const getAllArtistAlbums = async (artistId: string) => {
 	const data = await spotifyFetch<{ items: Album[] }>(
-		`https://api.spotify.com/v1/artists/${artistId}/albums?limit=50`
+		`https://api.spotify.com/v1/artists/${artistId}/albums?limit=50`,
 	);
 	return data.items;
 };
 
 export const getAlbumTracks = async (albumId: string) => {
 	const data = await spotifyFetch<{ items: Track[] }>(
-		`https://api.spotify.com/v1/albums/${albumId}/tracks`
+		`https://api.spotify.com/v1/albums/${albumId}/tracks`,
 	);
 	return data.items;
 };
 
 export const prepareArtistContext = async (
 	artistName: string,
-	market?: string
+	market?: string,
 ): Promise<ArtistContext> => {
 	return timed('Spotify', `prepareArtistContext("${artistName}")`, async () => {
 		const data = await spotifyFetch<{
@@ -155,7 +149,7 @@ export const prepareArtistContext = async (
 		}>(
 			`https://api.spotify.com/v1/search?query=${encodeURIComponent(artistName)}&type=artist${
 				market ? `&market=${encodeURIComponent(market)}` : ''
-			}&limit=1`
+			}&limit=1`,
 		);
 
 		const artist = data.artists.items[0];
@@ -176,9 +170,7 @@ export const prepareArtistContext = async (
 	});
 };
 
-export const getRandomTrackFromContext = async (
-	context: ArtistContext
-): Promise<TrackResult> => {
+export const getRandomTrackFromContext = async (context: ArtistContext): Promise<TrackResult> => {
 	return timed('Spotify', 'getRandomTrackFromContext', async () => {
 		const randomAlbum = context.albums[Math.floor(Math.random() * context.albums.length)];
 		const tracks = await getAlbumTracks(randomAlbum.id);

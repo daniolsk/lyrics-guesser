@@ -19,8 +19,7 @@ const normalize = (text: string) =>
 
 const stripSuffix = (title: string) => title.split(/\s[-–—]\s/)[0];
 
-const stripBrackets = (title: string) =>
-	title.replace(/\([^)]*\)|\[[^\]]*\]/g, ' ');
+const stripBrackets = (title: string) => title.replace(/\([^)]*\)|\[[^\]]*\]/g, ' ');
 
 const getCandidates = (title: string) => {
 	const candidates = [
@@ -32,9 +31,7 @@ const getCandidates = (title: string) => {
 		.map(normalize)
 		.filter((candidate) => candidate.length > 0);
 
-	return candidates.filter(
-		(candidate, index) => candidates.indexOf(candidate) === index,
-	);
+	return candidates.filter((candidate, index) => candidates.indexOf(candidate) === index);
 };
 
 const levenshtein = (a: string, b: string) => {
@@ -44,11 +41,7 @@ const levenshtein = (a: string, b: string) => {
 		const current = [i];
 		for (let j = 1; j <= b.length; j++) {
 			const cost = a[i - 1] === b[j - 1] ? 0 : 1;
-			current[j] = Math.min(
-				previous[j] + 1,
-				current[j - 1] + 1,
-				previous[j - 1] + cost,
-			);
+			current[j] = Math.min(previous[j] + 1, current[j - 1] + 1, previous[j - 1] + cost);
 		}
 		previous = current;
 	}
@@ -79,7 +72,5 @@ export const isCorrectGuess = (guess: string, title: string) => {
 		return false;
 	}
 
-	return getCandidates(title).some((candidate) =>
-		matchesCandidate(normalizedGuess, candidate),
-	);
+	return getCandidates(title).some((candidate) => matchesCandidate(normalizedGuess, candidate));
 };

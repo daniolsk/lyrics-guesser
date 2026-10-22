@@ -19,19 +19,14 @@ export default function Home() {
 	return (
 		<div className="h-[100svh] overflow-hidden bg-[url('/bg.svg')] bg-[length:160rem] bg-top bg-repeat">
 			<div className="m-auto flex h-full max-w-7xl flex-col justify-between">
-				<main
-					className="flex flex-1 flex-col items-center justify-center p-5"
-				>
+				<main className="flex flex-1 flex-col items-center justify-center p-5">
 					<div className="mb-2 flex text-center text-4xl font-extrabold tracking-wide text-white md:mb-4 md:text-6xl">
 						<span className="py-2">Guess the&nbsp;</span>
 						<span className="background-animate bg-linear-to-r from-red-400 to-green-400 bg-clip-text py-2 text-transparent">
 							Song
 						</span>
 					</div>
-					<form
-						className="mb-4 flex flex-col"
-						onSubmit={(e) => handleSubmit(e)}
-					>
+					<form className="mb-4 flex flex-col" onSubmit={(e) => handleSubmit(e)}>
 						<div className="mb-4 flex items-center justify-center">
 							<input
 								type="text"
@@ -46,7 +41,7 @@ export default function Home() {
 						<button
 							type="submit"
 							disabled={artist.length === 0}
-							className="mb-8 mt-4 w-full max-w-md cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:px-5 md:py-3 md:text-xl"
+							className="mt-4 mb-8 w-full max-w-md cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:px-5 md:py-3 md:text-xl"
 						>
 							Start
 						</button>

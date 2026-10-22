@@ -10,7 +10,7 @@ export default function App({ Component, pageProps }: AppProps) {
 		<>
 			<Head>
 				<title>Guess the Song</title>
-				<link rel='icon' href='/favicon.svg' />
+				<link rel="icon" href="/favicon.svg" />
 			</Head>
 			<div className={inter.className}>
 				<Component {...pageProps} />

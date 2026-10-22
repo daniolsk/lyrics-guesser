@@ -2,10 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 
 import { guessSong, GuessSongResult } from '@/utils/guessSong';
 
-export default async function handler(
-	req: NextApiRequest,
-	res: NextApiResponse<GuessSongResult>
-) {
+export default async function handler(req: NextApiRequest, res: NextApiResponse<GuessSongResult>) {
 	if (req.method !== 'GET') {
 		return res.status(405).json({ error: 'Method not allowed' });
 	}
@@ -15,8 +12,7 @@ export default async function handler(
 		return res.status(400).json({ error: 'Artist is required' });
 	}
 
-	const market =
-		typeof req.query.market === 'string' ? req.query.market : undefined;
+	const market = typeof req.query.market === 'string' ? req.query.market : undefined;
 
 	const result = await guessSong(artist, market);
 

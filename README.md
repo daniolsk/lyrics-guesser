@@ -3,6 +3,7 @@
 ### App is live at [guessthesong.vercel.app](https://guessthesong.vercel.app/)
 
 ## Preview
+
 <p float="left" align="middle">
     <a href="https://guessthesong.vercel.app">
         <img style="widht: 100px" src="https://guessthesong.vercel.app/preview/1.png" width="270">

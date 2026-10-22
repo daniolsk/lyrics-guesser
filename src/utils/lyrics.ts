@@ -8,11 +8,9 @@ const Client = new GeniusClient(process.env.GENIUS_SECRET as string);
 
 const MIN_LYRIC_LINES = 4;
 const LRCLIB_TIMEOUT_MS = 12_000;
-const LRCLIB_USER_AGENT =
-	'lyrics-guesser/0.1.0 (https://guessthesong.vercel.app)';
+const LRCLIB_USER_AGENT = 'lyrics-guesser/0.1.0 (https://guessthesong.vercel.app)';
 
-const isInstrumentalTitle = (title: string) =>
-	title.toLowerCase().includes('instrumental');
+const isInstrumentalTitle = (title: string) => title.toLowerCase().includes('instrumental');
 
 type LrclibResult = {
 	id: number;
@@ -67,12 +65,7 @@ const parseLyricsLines = (lyrics: string): string[] => {
 		.split('\n')
 		.map((line) => line.replace(/^\[\d{2}:\d{2}(?:\.\d+)?\]\s*/, '').trim())
 		.map((line) => line.replace(/^\d+\s+Contributors.*$/i, '').trim())
-		.filter(
-			(line) =>
-				line.length > 0 &&
-				line[0] !== '[' &&
-				!/^\d+\s+Contributors/i.test(line)
-		);
+		.filter((line) => line.length > 0 && line[0] !== '[' && !/^\d+\s+Contributors/i.test(line));
 };
 
 const expandArtistNames = (artists: (string | undefined)[]): string[] => {
@@ -153,17 +146,14 @@ const searchLrclib = async (params: URLSearchParams): Promise<LrclibResult[]> =>
 const scoreLrclibResult = (result: LrclibResult, title: string, artists: string[]) => {
 	const titleScore = stringSim.compareTwoStrings(
 		title.toUpperCase(),
-		result.trackName.toUpperCase()
+		result.trackName.toUpperCase(),
 	);
 
 	const artistScore = artists.length
 		? Math.max(
 				...artists.map((artist) =>
-					stringSim.compareTwoStrings(
-						artist.toUpperCase(),
-						result.artistName.toUpperCase()
-					)
-				)
+					stringSim.compareTwoStrings(artist.toUpperCase(), result.artistName.toUpperCase()),
+				),
 			)
 		: 0.5;
 
@@ -173,7 +163,7 @@ const scoreLrclibResult = (result: LrclibResult, title: string, artists: string[
 const pickBestLrclibMatch = (
 	results: LrclibResult[],
 	title: string,
-	artistNames: string[]
+	artistNames: string[],
 ): string | null => {
 	const candidates = results
 		.map((result) => {
@@ -182,10 +172,7 @@ const pickBestLrclibMatch = (
 				return null;
 			}
 
-			if (
-				!isInstrumentalTitle(title) &&
-				isInstrumentalTitle(result.trackName)
-			) {
+			if (!isInstrumentalTitle(title) && isInstrumentalTitle(result.trackName)) {
 				return null;
 			}
 
@@ -197,22 +184,19 @@ const pickBestLrclibMatch = (
 		})
 		.filter(
 			(
-				candidate
+				candidate,
 			): candidate is {
 				lyricsText: string;
 				lineCount: number;
 				score: number;
-			} => candidate !== null && candidate.lineCount >= MIN_LYRIC_LINES
+			} => candidate !== null && candidate.lineCount >= MIN_LYRIC_LINES,
 		)
 		.sort((a, b) => b.score - a.score);
 
 	return candidates[0]?.lyricsText ?? null;
 };
 
-const getLyricsTextFromLrclib = async (
-	title: string,
-	artists: string[] = []
-): Promise<string> => {
+const getLyricsTextFromLrclib = async (title: string, artists: string[] = []): Promise<string> => {
 	return timed('LRCLIB', `getLyricsText("${title}")`, async () => {
 		const artistNames = expandArtistNames(artists);
 		const primaryArtist = artistNames[0] ?? '';
@@ -224,7 +208,7 @@ const getLyricsTextFromLrclib = async (
 						new URLSearchParams({
 							track_name: title,
 							artist_name: primaryArtist,
-						})
+						}),
 					)
 				: Promise.resolve([]),
 		]);
@@ -236,11 +220,7 @@ const getLyricsTextFromLrclib = async (
 			}
 		}
 
-		const match = pickBestLrclibMatch(
-			Array.from(resultsById.values()),
-			title,
-			artistNames
-		);
+		const match = pickBestLrclibMatch(Array.from(resultsById.values()), title, artistNames);
 
 		if (!match) {
 			throw new Error('Lyrics not found');
@@ -250,10 +230,7 @@ const getLyricsTextFromLrclib = async (
 	});
 };
 
-const buildLyricsFromText = (
-	lyricsText: string,
-	metadata: SongMetadata
-): Lyrics => {
+const buildLyricsFromText = (lyricsText: string, metadata: SongMetadata): Lyrics => {
 	const lyricsArray = parseLyricsLines(lyricsText);
 
 	if (lyricsArray.length < MIN_LYRIC_LINES) {
@@ -280,7 +257,7 @@ const buildLyricsFromText = (
 const getGeniusLyrics = async (
 	title: string,
 	queryArtist: string,
-	metadata: SongMetadata
+	metadata: SongMetadata,
 ): Promise<Lyrics | null> => {
 	const startedAt = Date.now();
 
@@ -301,12 +278,7 @@ const getGeniusLyrics = async (
 		const songArtist = songs[0].artist.name;
 		const songArtistNames = songs[0]._raw.artist_names;
 
-		if (
-			isInstrumentalTitle(songTitle) ||
-			!songTitle ||
-			!songArtist ||
-			!songArtistNames
-		) {
+		if (isInstrumentalTitle(songTitle) || !songTitle || !songArtist || !songArtistNames) {
 			logRequest('Genius', `getLyrics("${songTitle}")`, startedAt, {
 				status: 'error',
 				error: 'incomplete metadata',
@@ -344,7 +316,7 @@ const getGeniusLyrics = async (
 export const getLyricsForTrack = async (
 	title: string,
 	queryArtist: string,
-	metadata: SongMetadata
+	metadata: SongMetadata,
 ): Promise<Lyrics> => {
 	return timed('Lyrics', `getLyricsForTrack("${title}")`, async () => {
 		if (isInstrumentalTitle(title)) {

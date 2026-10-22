@@ -1,10 +1,6 @@
 import { logRequest } from '@/utils/requestLog';
 import { getLyricsForTrack, isValidLyrics } from '@/utils/lyrics';
-import {
-	getRandomTrackFromContext,
-	prepareArtistContext,
-	TrackResult,
-} from '@/utils/spotify';
+import { getRandomTrackFromContext, prepareArtistContext, TrackResult } from '@/utils/spotify';
 import { Lyrics, Song } from '@/utils/types';
 
 export type GuessSongResult = { song: Song } | { error: string };
