@@ -131,10 +131,6 @@ const filterAlbums = (albums: Album[]) =>
 			!album.name.toLowerCase().includes('instrumental')
 	);
 
-export const getArtist = async (artistId: string) => {
-	return spotifyFetch(`https://api.spotify.com/v1/artists/${artistId}`);
-};
-
 export const getAllArtistAlbums = async (artistId: string) => {
 	const data = await spotifyFetch<{ items: Album[] }>(
 		`https://api.spotify.com/v1/artists/${artistId}/albums?limit=50`
@@ -149,23 +145,6 @@ export const getAlbumTracks = async (albumId: string) => {
 	return data.items;
 };
 
-export const getArtistId = async (artistName: string, market?: string) => {
-	const data = await spotifyFetch<{
-		artists: { items: { id: string; name: string }[] };
-	}>(
-		`https://api.spotify.com/v1/search?query=${encodeURIComponent(artistName)}&type=artist${
-			market ? `&market=${market}` : ''
-		}&limit=1`
-	);
-
-	const artist = data.artists.items[0];
-	if (!artist) {
-		throw new Error(`Artist not found: ${artistName}`);
-	}
-
-	return artist.id;
-};
-
 export const prepareArtistContext = async (
 	artistName: string,
 	market?: string
@@ -175,7 +154,7 @@ export const prepareArtistContext = async (
 			artists: { items: { id: string; name: string }[] };
 		}>(
 			`https://api.spotify.com/v1/search?query=${encodeURIComponent(artistName)}&type=artist${
-				market ? `&market=${market}` : ''
+				market ? `&market=${encodeURIComponent(market)}` : ''
 			}&limit=1`
 		);
 
@@ -207,19 +186,4 @@ export const getRandomTrackFromContext = async (
 
 		return toTrackResult(randomTrack, randomAlbum, context.artistName);
 	});
-};
-
-/** @deprecated Use prepareArtistContext + getRandomTrackFromContext */
-export const getAppToken = async () => {
-	const accessToken = await getAccessToken();
-	return { access_token: accessToken, expires_in: 3600 };
-};
-
-/** @deprecated Use prepareArtistContext + getRandomTrackFromContext */
-export const getRandomArtistTrack = async (
-	artistName: string,
-	market?: string
-) => {
-	const context = await prepareArtistContext(artistName, market);
-	return getRandomTrackFromContext(context);
 };

@@ -1,11 +1,10 @@
-const Genius = require('genius-lyrics');
-
+import { Client as GeniusClient } from 'genius-lyrics';
 import stringSim from 'string-similarity';
 
 import { logRequest, timed } from '@/utils/requestLog';
 import { Lyrics } from '@/utils/types';
 
-const Client = new Genius.Client(process.env.GENIUS_SECRET as string);
+const Client = new GeniusClient(process.env.GENIUS_SECRET as string);
 
 const MIN_LYRIC_LINES = 4;
 const LRCLIB_TIMEOUT_MS = 12_000;
@@ -374,34 +373,4 @@ export const getLyricsForTrack = async (
 
 		throw new Error('Lyrics not found');
 	});
-};
-
-/** @deprecated Use getLyricsForTrack with Spotify metadata */
-export const getLyrics = async (title: string, artist?: string): Promise<Lyrics> => {
-	try {
-		const lyricsText = await getLyricsTextFromLrclib(title, [artist ?? '']);
-		return buildLyricsFromText(lyricsText, {
-			songTitle: title,
-			songImage: '',
-			songArtist: artist ?? '',
-			songArtistNames: artist ?? '',
-		});
-	} catch {
-		// Genius scrapes HTML and is often blocked from Vercel — use only as fallback.
-	}
-
-	if (process.env.VERCEL !== '1') {
-		const geniusLyrics = await getGeniusLyrics(title, artist ?? '', {
-			songTitle: title,
-			songImage: '',
-			songArtist: artist ?? '',
-			songArtistNames: artist ?? '',
-		});
-
-		if (geniusLyrics) {
-			return geniusLyrics;
-		}
-	}
-
-	throw new Error('Lyrics not found');
 };
