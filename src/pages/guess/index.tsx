@@ -157,7 +157,7 @@ function Guess({ artist, market }: { artist: string; market?: string }) {
 
   return (
     <div
-      className={`length:160rem flex min-h-[100svh] flex-col justify-between bg-[url('/bg.svg')] bg-top bg-repeat ${
+      className={`flex bg-[length:160rem] min-h-[100svh] flex-col justify-between bg-[url('/bg.svg')] bg-top bg-repeat ${
         isGuessed ? `${isCorrect ? "bg-green-1000" : "bg-red-1000"}` : ""
       }`}
     >
@@ -172,36 +172,13 @@ function Guess({ artist, market }: { artist: string; market?: string }) {
             </div>
             <Loading />
           </div>
-        ) : error ? (
+        ) : error || !song ? (
           <div className="flex flex-col items-center">
             <div className="mb-4 text-center text-xl font-bold md:text-3xl">
               Error:
             </div>
             <div className="mb-2 text-center text-base font-semibold md:text-xl">
-              {error}
-            </div>
-            <div className="flex gap-4">
-              <button
-                onClick={fetchNextSong}
-                className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-500 disabled:text-gray-500"
-              >
-                Try again
-              </button>
-              <button
-                onClick={() => router.push("/")}
-                className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-500 disabled:text-gray-500"
-              >
-                Back
-              </button>
-            </div>
-          </div>
-        ) : !song ? (
-          <div className="flex flex-col items-center">
-            <div className="mb-4 text-center text-xl font-bold md:text-3xl">
-              Error:
-            </div>
-            <div className="mb-2 text-center text-base font-semibold md:text-xl">
-              Something went wrong - try again later
+              {error ?? DEFAULT_ERROR}
             </div>
             <div className="flex gap-4">
               <button
@@ -232,10 +209,7 @@ function Guess({ artist, market }: { artist: string; market?: string }) {
                 target="_blank"
                 className="mb-10 mt-4 bg-gray-1000"
               >
-                <div
-                  className="relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72"
-                  onClick={() => setShowImg(true)}
-                >
+                <div className="relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72">
                   <Image
                     fill
                     onContextMenu={(e) => e.preventDefault()}
@@ -300,7 +274,7 @@ function Guess({ artist, market }: { artist: string; market?: string }) {
                       className="text-base sm:text-lg md:text-xl"
                     >
                       {verse}
-                      {index == 1 ? '"' : ""}
+                      {index === 1 ? '"' : ""}
                     </div>
                   ))}
                 </>
@@ -355,7 +329,7 @@ function Guess({ artist, market }: { artist: string; market?: string }) {
                 </div>
                 <div className="flex gap-4">
                   <input
-                    disabled={isGuessed || guess.length == 0}
+                    disabled={isGuessed || guess.length === 0}
                     value="Check"
                     type="submit"
                     className="mb-4 mt-4 cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-400 disabled:text-gray-400"

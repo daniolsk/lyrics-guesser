@@ -4,7 +4,7 @@ export const getLoadingText = (notThisOne?: string) => {
 	let text;
 	do {
 		text = loadingTexts[Math.floor(Math.random() * loadingTexts.length)];
-	} while (text == notThisOne);
+	} while (text === notThisOne);
 
 	return text;
 };

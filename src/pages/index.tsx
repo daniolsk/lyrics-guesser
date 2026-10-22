@@ -1,8 +1,5 @@
 import { FormEvent, useState } from 'react';
 
-import { Inter } from 'next/font/google';
-const inter = Inter({ subsets: ['latin'] });
-
 import { useRouter } from 'next/router';
 import Footer from '@/components/ui/Footer';
 
@@ -23,11 +20,11 @@ export default function Home() {
 		<div className="h-[100svh] overflow-hidden bg-[url('/bg.svg')] bg-[length:160rem] bg-top bg-repeat">
 			<div className="m-auto flex h-full max-w-7xl flex-col justify-between">
 				<main
-					className={`flex flex-1 flex-col items-center justify-center p-5 ${inter.className}`}
+					className="flex flex-1 flex-col items-center justify-center p-5"
 				>
 					<div className="mb-2 flex text-center text-4xl font-extrabold tracking-wide text-white md:mb-4 md:text-6xl">
 						<span className="py-2">Guess the&nbsp;</span>
-						<span className="background-animate bg-gradient-to-r from-red-400 to-green-400 bg-clip-text py-2 text-transparent">
+						<span className="background-animate bg-linear-to-r from-red-400 to-green-400 bg-clip-text py-2 text-transparent">
 							Song
 						</span>
 					</div>
@@ -48,7 +45,7 @@ export default function Home() {
 
 						<button
 							type="submit"
-							disabled={artist.length == 0}
+							disabled={artist.length === 0}
 							className="mb-8 mt-4 w-full max-w-md cursor-pointer border-2 border-white bg-gray-1000 px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black disabled:border-gray-500 disabled:text-gray-500 md:px-5 md:py-3 md:text-xl"
 						>
 							Start
@@ -64,13 +61,8 @@ export default function Home() {
 								className="w-16 border-b-2 bg-transparent p-2 text-center text-sm focus:outline-none active:outline-none"
 								placeholder="e.g. PL"
 								value={market}
-								onChange={(e) => {
-									if (e.target.value.length <= 2) {
-										setMarket(e.target.value.toUpperCase());
-									} else {
-										return;
-									}
-								}}
+								maxLength={2}
+								onChange={(e) => setMarket(e.target.value.toUpperCase())}
 								spellCheck={false}
 							/>
 						</div>
