@@ -23,12 +23,16 @@ type Round = {
 };
 
 // Gaps go in the second verse so the first one sets the scene, unless it has no words to hide.
+// When neither verse has a gap worth guessing, any single word of the second one will do.
 const createRound = (song: Song): Round => {
 	const secondParts = blankVerse(song.secondVerse);
-	const parts = secondParts ?? blankVerse(song.firstVerse) ?? [{ text: song.secondVerse }];
+	const firstParts = secondParts ? null : blankVerse(song.firstVerse);
+	const parts = secondParts ??
+		firstParts ??
+		blankVerse(song.secondVerse, 1) ?? [{ text: song.secondVerse }];
 	return {
 		song,
-		blankedVerse: secondParts ? 'second' : 'first',
+		blankedVerse: firstParts ? 'first' : 'second',
 		parts,
 		answers: parts.flatMap((part) => ('answer' in part ? [part.answer] : [])),
 	};

@@ -1,6 +1,8 @@
 import { levenshtein, normalize } from '@/utils/text';
 
 const MAX_BLANKS = 3;
+// A gap of one short word ("a", "the") is too easy, so a lone gap needs a longer word.
+const MIN_SINGLE_WORD_LENGTH = 4;
 // Long words forgive a single typo, short ones must be exact so "a" vs "i" still counts.
 const TYPO_MIN_LENGTH = 5;
 
@@ -12,15 +14,25 @@ const splitToken = (token: string) => {
 	return match ? { before: match[1], word: match[2], after: match[3] } : null;
 };
 
-const isBlankable = (token: string) => /\p{L}/u.test(splitToken(token)?.word ?? '');
+const getWord = (token: string) => splitToken(token)?.word ?? '';
+
+const isBlankable = (token: string) => /\p{L}/u.test(getWord(token));
 
 // Blanks a random run of 1 to 3 neighbouring words, so the gap reads like a piece of the line.
-export const blankVerse = (verse: string): LyricsPart[] | null => {
+export const blankVerse = (
+	verse: string,
+	minSingleWordLength = MIN_SINGLE_WORD_LENGTH,
+): LyricsPart[] | null => {
 	const tokens = verse.split(/(\s+)/).filter((token) => token.length > 0);
 	const wordIndexes = tokens.flatMap((token, index) => (/\S/.test(token) ? [index] : []));
 
+	// Tries fewer words first, then more, e.g. two short words when no lone word is long enough.
 	const wanted = 1 + Math.floor(Math.random() * MAX_BLANKS);
-	for (let count = wanted; count > 0; count--) {
+	const counts = [
+		...Array.from({ length: wanted }, (_, index) => wanted - index),
+		...Array.from({ length: MAX_BLANKS - wanted }, (_, index) => wanted + index + 1),
+	];
+	for (const count of counts) {
 		const starts = wordIndexes
 			.map((_, position) => position)
 			.filter(
@@ -28,7 +40,9 @@ export const blankVerse = (verse: string): LyricsPart[] | null => {
 					position + count <= wordIndexes.length &&
 					wordIndexes
 						.slice(position, position + count)
-						.every((index) => isBlankable(tokens[index])),
+						.every((index) => isBlankable(tokens[index])) &&
+					(count > 1 ||
+						normalize(getWord(tokens[wordIndexes[position]])).length >= minSingleWordLength),
 			);
 		if (!starts.length) {
 			continue;
