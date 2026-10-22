@@ -1,11 +1,24 @@
 'use client';
 
-import { FormEvent, useState } from 'react';
+import { FormEvent, use, useState } from 'react';
 
 import { useRouter } from 'next/navigation';
 import Footer from '@/components/ui/Footer';
 
-export default function Home() {
+type Mode = 'song' | 'lyrics';
+
+const MODES: { value: Mode; label: string }[] = [
+	{ value: 'song', label: 'Guess the title' },
+	{ value: 'lyrics', label: 'Fill in the lyrics' },
+];
+
+type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+
+export default function Home({ searchParams }: { searchParams: SearchParams }) {
+	// The games link back with their mode, so the player lands on the mode they just played.
+	const initialMode: Mode = use(searchParams).mode === 'lyrics' ? 'lyrics' : 'song';
+
+	const [mode, setMode] = useState<Mode>(initialMode);
 	const [artist, setArtist] = useState('');
 	const [market, setMarket] = useState('');
 	const router = useRouter();
@@ -16,7 +29,7 @@ export default function Home() {
 		if (market.length > 0) {
 			params.set('market', market);
 		}
-		router.push(`/guess?${params.toString()}`);
+		router.push(`/${mode === 'lyrics' ? 'lyrics' : 'guess'}?${params.toString()}`);
 	};
 
 	return (
@@ -26,8 +39,25 @@ export default function Home() {
 					<div className="mb-2 flex text-center text-4xl font-extrabold tracking-wide text-white md:mb-4 md:text-6xl">
 						<span className="py-2">Guess the&nbsp;</span>
 						<span className="animate-background-scroll bg-linear-to-r from-red-400 to-green-400 bg-size-[500%] bg-clip-text py-2 text-transparent">
-							Song
+							{mode === 'lyrics' ? 'Lyrics' : 'Song'}
 						</span>
+					</div>
+					<div className="mb-4 flex gap-2">
+						{MODES.map(({ value, label }) => (
+							<button
+								key={value}
+								type="button"
+								aria-pressed={mode === value}
+								onClick={() => setMode(value)}
+								className={`cursor-pointer border-2 px-3 py-1 text-sm font-semibold md:text-base ${
+									mode === value
+										? 'border-white bg-white text-black'
+										: 'border-gray-500 text-gray-400 hover:border-white hover:text-white'
+								}`}
+							>
+								{label}
+							</button>
+						))}
 					</div>
 					<form className="mb-4 flex flex-col" onSubmit={(e) => handleSubmit(e)}>
 						<div className="mb-4 flex items-center justify-center">
