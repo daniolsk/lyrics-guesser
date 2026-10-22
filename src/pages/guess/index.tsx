@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import { GetServerSideProps } from "next";
-import stringSim from "string-similarity";
 import { AiOutlineInfoCircle, AiFillQuestionCircle } from "react-icons/ai";
 
 import { Song } from "@/utils/types";
+import { isCorrectGuess } from "@/utils/matchTitle";
 import Footer from "@/components/ui/Footer";
 import Loading from "@/components/ui/Loading";
 
@@ -135,16 +135,7 @@ export default function Guess() {
       return;
     }
 
-    const sim = stringSim.compareTwoStrings(
-      guess.toUpperCase(),
-      song.songTitle.toUpperCase(),
-    );
-
-    if (sim >= 0.75) {
-      setIsCorrect(true);
-    } else {
-      setIsCorrect(false);
-    }
+    setIsCorrect(isCorrectGuess(guess, song.songTitle));
 
     setIsGuessed(true);
   };
