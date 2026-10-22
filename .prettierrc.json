@@ -1,8 +1,16 @@
 {
-	"useTabs": true,
-	"singleQuote": true,
-	"jsxSingleQuote": false,
-	"printWidth": 100,
-	"plugins": ["prettier-plugin-tailwindcss"],
-	"tailwindStylesheet": "./src/styles/globals.css"
+  "useTabs": true,
+  "singleQuote": true,
+  "jsxSingleQuote": false,
+  "printWidth": 100,
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "tailwindStylesheet": "./src/styles/globals.css",
+  "overrides": [
+    {
+      "files": "*.json",
+      "options": {
+        "useTabs": false
+      }
+    }
+  ]
 }
