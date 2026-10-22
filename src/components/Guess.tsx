@@ -16,6 +16,7 @@ import Loading from '@/components/ui/Loading';
 const DEFAULT_ERROR = 'Something went wrong on our side. Try again in a moment.';
 const CONNECTION_ERROR = "Couldn't reach the server. Check your internet connection and try again.";
 const TIMEOUT_ERROR = 'Finding a song took too long. Try again.';
+const RATE_LIMIT_ERROR = "You're going a bit too fast. Wait a minute and try again.";
 
 const requestSong = async (
 	artist: string,
@@ -55,6 +56,11 @@ const requestSong = async (
 
 	if (data?.error) {
 		return { error: data.error };
+	}
+
+	// The Vercel Firewall rate limit answers with 429 before the request reaches our API.
+	if (response.status === 429) {
+		return { error: RATE_LIMIT_ERROR };
 	}
 
 	return { error: response.status === 504 ? TIMEOUT_ERROR : DEFAULT_ERROR };
