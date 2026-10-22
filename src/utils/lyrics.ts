@@ -1,11 +1,8 @@
-import { Client as GeniusClient } from 'genius-lyrics';
 import stringSim from 'string-similarity';
 
 import { getSearchTitle } from '@/utils/matchTitle';
 import { logRequest, timed } from '@/utils/requestLog';
 import { Lyrics } from '@/utils/types';
-
-const Client = new GeniusClient(process.env.GENIUS_SECRET as string);
 
 const MIN_LYRIC_LINES = 4;
 const LRCLIB_TIMEOUT_MS = 12_000;
@@ -267,65 +264,6 @@ const buildLyricsFromText = (lyricsText: string, metadata: SongMetadata): Lyrics
 	return result;
 };
 
-const getGeniusLyrics = async (
-	title: string,
-	queryArtist: string,
-	metadata: SongMetadata,
-): Promise<Lyrics | null> => {
-	const startedAt = Date.now();
-
-	try {
-		const searchStartedAt = Date.now();
-		const songs = await Client.songs.search(`${title} ${queryArtist}`);
-		logRequest('Genius', `search("${title}" "${queryArtist}")`, searchStartedAt, {
-			status: 'ok',
-			results: songs?.length ?? 0,
-		});
-
-		if (!songs?.length) {
-			return null;
-		}
-
-		const songTitle = songs[0].title.replace(/(^[\s\u200b]*|[\s\u200b]*$)/g, '');
-		const songImage = songs[0]._raw.song_art_image_url;
-		const songArtist = songs[0].artist.name;
-		const songArtistNames = songs[0]._raw.artist_names;
-
-		if (isInstrumentalTitle(songTitle) || !songTitle || !songArtist || !songArtistNames) {
-			logRequest('Genius', `getLyrics("${songTitle}")`, startedAt, {
-				status: 'error',
-				error: 'incomplete metadata',
-			});
-			return null;
-		}
-
-		const lyricsStartedAt = Date.now();
-		const lyricsText = await songs[0].lyrics();
-		logRequest('Genius', `getLyrics("${songTitle}")`, lyricsStartedAt, {
-			status: 'ok',
-			lines: parseLyricsLines(lyricsText).length,
-		});
-
-		if (parseLyricsLines(lyricsText).length < MIN_LYRIC_LINES) {
-			return null;
-		}
-
-		logRequest('Genius', `fallback("${title}")`, startedAt, { status: 'ok' });
-		return buildLyricsFromText(lyricsText, {
-			songTitle,
-			songImage: metadata.songImage || songImage,
-			songArtist,
-			songArtistNames,
-		});
-	} catch (error) {
-		logRequest('Genius', `fallback("${title}")`, startedAt, {
-			status: 'error',
-			error: error instanceof Error ? error.message : String(error),
-		});
-		return null;
-	}
-};
-
 export const getLyricsForTrack = async (
 	title: string,
 	queryArtist: string,
@@ -344,22 +282,7 @@ export const getLyricsForTrack = async (
 
 		const searchTitle = getSearchTitle(title);
 
-		let lrclibUnavailable = false;
-		try {
-			const lyricsText = await getLyricsTextFromLrclib(searchTitle, artistHints);
-			return buildLyricsFromText(lyricsText, metadata);
-		} catch (error) {
-			lrclibUnavailable = error instanceof LyricsUnavailableError;
-			// Genius scrapes HTML and is often blocked from Vercel — use only as fallback.
-		}
-
-		if (process.env.VERCEL !== '1') {
-			const geniusLyrics = await getGeniusLyrics(searchTitle, queryArtist, metadata);
-			if (geniusLyrics) {
-				return geniusLyrics;
-			}
-		}
-
-		throw lrclibUnavailable ? new LyricsUnavailableError() : new Error('Lyrics not found');
+		const lyricsText = await getLyricsTextFromLrclib(searchTitle, artistHints);
+		return buildLyricsFromText(lyricsText, metadata);
 	});
 };
