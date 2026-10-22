@@ -23,7 +23,7 @@ type Track = {
 	preview_url: string | null;
 	id: string;
 	external_urls: { spotify: string };
-	artists?: { name: string }[];
+	artists?: { id: string; name: string }[];
 };
 
 export type TrackResult = {
@@ -266,6 +266,11 @@ export const prepareArtistContext = async (
 	});
 };
 
+// Albums can be shared by several artists (e.g. collaboration or event albums), so
+// only pick tracks the artist actually performs on.
+const isByArtist = (track: Track, artistId: string) =>
+	track.artists?.some((artist) => artist.id === artistId) ?? false;
+
 const getCachedAlbumTracks = (context: ArtistContext, albumId: string) => {
 	let tracks = context.albumTracks.get(albumId);
 	if (!tracks) {
@@ -294,7 +299,11 @@ export const getRandomTrackFromContext = async (context: ArtistContext): Promise
 		for (const album of albums) {
 			for (const track of await getCachedAlbumTracks(context, album.id)) {
 				const songKey = getSongKey(track.name);
-				if (isInstrumentalTrack(track.name) || context.triedSongs.has(songKey)) {
+				if (
+					isInstrumentalTrack(track.name) ||
+					!isByArtist(track, context.artistId) ||
+					context.triedSongs.has(songKey)
+				) {
 					continue;
 				}
 				candidates.push({ track, album, songKey, rank: getTrackRank(context, songKey) });
