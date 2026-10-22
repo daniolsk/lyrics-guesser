@@ -11,9 +11,56 @@ import { isCorrectGuess } from "@/utils/matchTitle";
 import Footer from "@/components/ui/Footer";
 import Loading from "@/components/ui/Loading";
 
-export default function Guess() {
+const DEFAULT_ERROR = "Something went wrong - try again later";
+
+const requestSong = async (
+  artist: string,
+  market: string | undefined,
+  signal?: AbortSignal,
+): Promise<{ song: Song } | { error: string }> => {
+  const params = new URLSearchParams({ artist });
+  if (market) {
+    params.set("market", market);
+  }
+
+  try {
+    const response = await fetch(`/api/guess?${params.toString()}`, {
+      signal,
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      return { error: data.error ?? DEFAULT_ERROR };
+    }
+
+    return { song: data.song };
+  } catch {
+    return { error: DEFAULT_ERROR };
+  }
+};
+
+export default function GuessPage() {
   const router = useRouter();
   const { artist, market } = router.query;
+
+  if (!router.isReady || typeof artist !== "string") {
+    return null;
+  }
+
+  const marketParam = typeof market === "string" ? market : undefined;
+
+  // Remount on a new artist or market so the game starts from a fresh state.
+  return (
+    <Guess
+      key={`${artist}|${marketParam ?? ""}`}
+      artist={artist}
+      market={marketParam}
+    />
+  );
+}
+
+function Guess({ artist, market }: { artist: string; market?: string }) {
+  const router = useRouter();
 
   const [song, setSong] = useState<Song>();
   const [error, setError] = useState<string>();
@@ -23,11 +70,36 @@ export default function Guess() {
   const [allowNext, setAllowNext] = useState(false);
   const [guess, setGuess] = useState("");
   const [isGuessed, setIsGuessed] = useState(false);
-  const [isCorrect, setIsCorrect] = useState<Boolean>();
+  const [isCorrect, setIsCorrect] = useState<boolean>();
   const [showImg, setShowImg] = useState(false);
   const [showNextVerses, setShowNextVerses] = useState(false);
 
-  const resetGameState = useCallback(() => {
+  const fetchIdRef = useRef(0);
+
+  const loadSong = useCallback(
+    (signal?: AbortSignal) => {
+      const fetchId = ++fetchIdRef.current;
+
+      return requestSong(artist, market, signal).then((result) => {
+        if (signal?.aborted || fetchId !== fetchIdRef.current) {
+          return;
+        }
+
+        if ("song" in result) {
+          setSong(result.song);
+        } else {
+          setError(result.error);
+        }
+        setIsLoading(false);
+      });
+    },
+    [artist, market],
+  );
+
+  const fetchNextSong = () => {
+    setIsLoading(true);
+    setError(undefined);
+    setSong(undefined);
     setTime(5);
     setAllowNext(false);
     setGuess("");
@@ -35,81 +107,23 @@ export default function Guess() {
     setIsCorrect(undefined);
     setShowImg(false);
     setShowNextVerses(false);
-  }, []);
 
-  const fetchIdRef = useRef(0);
-
-  const fetchSong = useCallback(async (signal?: AbortSignal) => {
-    if (!artist || typeof artist !== "string") {
-      return;
-    }
-
-    const fetchId = ++fetchIdRef.current;
-
-    setIsLoading(true);
-    setError(undefined);
-    setSong(undefined);
-    resetGameState();
-
-    try {
-      const params = new URLSearchParams({ artist });
-      if (market && typeof market === "string") {
-        params.set("market", market);
-      }
-
-      const response = await fetch(`/api/guess?${params.toString()}`, {
-        signal,
-      });
-      const data = await response.json();
-
-      if (signal?.aborted || fetchId !== fetchIdRef.current) {
-        return;
-      }
-
-      if (!response.ok) {
-        setError(data.error ?? "Something went wrong - try again later");
-        return;
-      }
-
-      setSong(data.song);
-    } catch (error) {
-      if (signal?.aborted) {
-        return;
-      }
-      if (error instanceof DOMException && error.name === "AbortError") {
-        return;
-      }
-      if (fetchId !== fetchIdRef.current) {
-        return;
-      }
-      setError("Something went wrong - try again later");
-    } finally {
-      if (!signal?.aborted && fetchId === fetchIdRef.current) {
-        setIsLoading(false);
-      }
-    }
-  }, [artist, market, resetGameState]);
+    void loadSong();
+  };
 
   useEffect(() => {
-    if (!router.isReady) {
-      return;
-    }
-
-    if (!artist) {
-      router.replace("/");
-      return;
-    }
-
     const abortController = new AbortController();
-    fetchSong(abortController.signal);
+    void loadSong(abortController.signal);
 
     return () => {
       abortController.abort();
     };
-  }, [router.isReady, artist, market, fetchSong, router]);
+  }, [loadSong]);
+
+  const songId = song?.id;
 
   useEffect(() => {
-    if (!song) {
+    if (!songId) {
       return;
     }
 
@@ -126,7 +140,7 @@ export default function Guess() {
     return () => {
       clearInterval(interval);
     };
-  }, [song?.id]);
+  }, [songId]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -140,7 +154,6 @@ export default function Guess() {
     setIsGuessed(true);
   };
 
-  const showLoading = !router.isReady || isLoading;
 
   return (
     <div
@@ -149,7 +162,7 @@ export default function Guess() {
       }`}
     >
       <main className="flex flex-1 flex-col items-center justify-center p-5 pb-0">
-        {showLoading ? (
+        {isLoading ? (
           <div className="flex flex-col items-center">
             <div className="mb-6 hidden items-center justify-center md:flex">
               <h1 className="ml-2 flex items-center text-2xl font-semibold">
@@ -169,7 +182,7 @@ export default function Guess() {
             </div>
             <div className="flex gap-4">
               <button
-                onClick={() => fetchSong()}
+                onClick={fetchNextSong}
                 className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-500 disabled:text-gray-500"
               >
                 Try again
@@ -192,7 +205,7 @@ export default function Guess() {
             </div>
             <div className="flex gap-4">
               <button
-                onClick={() => fetchSong()}
+                onClick={fetchNextSong}
                 className="mb-8 mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-500 disabled:text-gray-500"
               >
                 Try again
@@ -366,7 +379,7 @@ export default function Guess() {
                 <div className="mb-4 flex gap-4">
                   <button
                     disabled={!allowNext || isLoading}
-                    onClick={() => fetchSong()}
+                    onClick={fetchNextSong}
                     className="mt-4 cursor-pointer border-2 border-white px-4 py-2 text-lg font-semibold hover:enabled:bg-white hover:enabled:text-black! disabled:border-gray-400 disabled:text-gray-400"
                   >
                     Try again {time > 0 ? `(${time})` : ""}

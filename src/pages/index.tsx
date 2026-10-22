@@ -13,9 +13,10 @@ export default function Home() {
 
 	const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
 		e.preventDefault();
-		router.push(
-			`/guess?artist=${artist}${market.length > 0 ? `&market=${market}` : ``}`
-		);
+		router.push({
+			pathname: '/guess',
+			query: market.length > 0 ? { artist, market } : { artist },
+		});
 	};
 
 	return (

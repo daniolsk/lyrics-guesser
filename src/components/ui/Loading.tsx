@@ -5,13 +5,16 @@ const Loading = ({ noText }: { noText?: boolean }) => {
   const [loadingText, setLoadingText] = useState("Loading...");
 
   useEffect(() => {
-    setLoadingText(getLoadingText());
-
-    const interval = setInterval(() => {
+    const updateText = () =>
       setLoadingText((oldText) => getLoadingText(oldText));
-    }, 3000);
+
+    // The text is random, so pick the first one after hydration to keep the
+    // server and client markup in sync.
+    const timeout = setTimeout(updateText, 0);
+    const interval = setInterval(updateText, 3000);
 
     return () => {
+      clearTimeout(timeout);
       clearInterval(interval);
     };
   }, []);
