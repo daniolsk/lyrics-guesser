@@ -5,7 +5,7 @@ import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
+import { AiOutlineInfoCircle } from 'react-icons/ai';
 
 import { Song } from '@/utils/types';
 import { blankVerse, isCorrectWord, LyricsPart } from '@/utils/blankLyrics';
@@ -50,7 +50,6 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 	const [guesses, setGuesses] = useState<string[]>([]);
 	const [isGuessed, setIsGuessed] = useState(false);
 	const [results, setResults] = useState<boolean[]>([]);
-	const [showNextVerses, setShowNextVerses] = useState(false);
 
 	const fetchIdRef = useRef(0);
 
@@ -86,7 +85,6 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 		setGuesses([]);
 		setIsGuessed(false);
 		setResults([]);
-		setShowNextVerses(false);
 
 		void loadSong();
 	};
@@ -268,29 +266,13 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 									{round.blankedVerse === 'second'
 										? renderBlankedVerse(round.parts)
 										: round.song.secondVerse}
-									{showNextVerses ? '' : '"'}
 								</div>
-								{showNextVerses ? (
-									<>
-										{round.song.nextVerses.map((verse, index) => (
-											<div key={index} className="text-base sm:text-lg md:text-xl">
-												{verse}
-												{index === 1 ? '"' : ''}
-											</div>
-										))}
-									</>
-								) : (
-									<button
-										type="button"
-										className="mt-2 flex w-full cursor-pointer items-center justify-center fill-gray-300 text-sm text-gray-300 hover:fill-gray-200 hover:text-gray-200 md:text-base"
-										onClick={() => setShowNextVerses(true)}
-									>
-										<span className="flex items-center">
-											<AiFillQuestionCircle className="mr-2 fill-inherit" size={18} />
-											Show next two verses
-										</span>
-									</button>
-								)}
+								{round.song.nextVerses.map((verse, index) => (
+									<div key={index} className="text-base sm:text-lg md:text-xl">
+										{verse}
+										{index === 1 ? '"' : ''}
+									</div>
+								))}
 							</div>
 							{isGuessed ? (
 								<div className="my-2 text-center text-2xl font-bold md:text-3xl">
