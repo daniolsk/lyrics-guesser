@@ -6,7 +6,9 @@
     "dev": "next dev -H 127.0.0.1 -p 7804",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@tailwindcss/postcss": "^4.3.3",
