@@ -6,6 +6,7 @@ export default function App({ Component, pageProps }: AppProps) {
 	return (
 		<>
 			<Head>
+				<title>Guess the Song</title>
 				<link rel='icon' href='/favicon.svg' />
 			</Head>
 			<Component {...pageProps} />
