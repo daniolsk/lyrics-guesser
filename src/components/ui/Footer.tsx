@@ -1,35 +1,57 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
-// Fired with the new total whenever a song is served, so the footer updates without refetching.
-export const SONGS_PLAYED_EVENT = 'songs-played';
+// The count lives outside the component so it survives navigations, where each page mounts its
+// own footer. It's fetched once per visit and then kept fresh by the guess API responses.
+let songsPlayed: number | undefined;
+let isFetchStarted = false;
+const listeners = new Set<() => void>();
+
+export const updateSongsPlayed = (value: number) => {
+	// The counter only grows, so ignore a slower response carrying an older total.
+	songsPlayed = Math.max(songsPlayed ?? 0, value);
+	listeners.forEach((listener) => listener());
+};
+
+const subscribe = (listener: () => void) => {
+	listeners.add(listener);
+	return () => listeners.delete(listener);
+};
 
 const Footer = () => {
-	const [songsPlayed, setSongsPlayed] = useState<number>();
+	const count = useSyncExternalStore(
+		subscribe,
+		() => songsPlayed,
+		() => undefined,
+	);
 
 	useEffect(() => {
+		if (isFetchStarted) {
+			return;
+		}
+		isFetchStarted = true;
+
 		fetch('/api/stats')
 			.then((response) => response.json())
 			.then((data) => {
 				if (typeof data?.songsPlayed === 'number') {
-					setSongsPlayed((current) => current ?? data.songsPlayed);
+					updateSongsPlayed(data.songsPlayed);
 				}
 			})
-			.catch(() => {});
-
-		const handlePlayed = (e: Event) => setSongsPlayed((e as CustomEvent<number>).detail);
-		window.addEventListener(SONGS_PLAYED_EVENT, handlePlayed);
-		return () => window.removeEventListener(SONGS_PLAYED_EVENT, handlePlayed);
+			.catch(() => {
+				isFetchStarted = false;
+			});
 	}, []);
 
 	return (
 		<footer className="bg-transparent p-4 text-center text-sm font-semibold text-white md:p-5">
-			{songsPlayed !== undefined && (
-				<div className="mb-1 text-gray-400">
-					{songsPlayed.toLocaleString('en-US')} songs played so far
-				</div>
-			)}
+			{/* Keep the line's space while loading so the footer doesn't jump when the count arrives. */}
+			<div
+				className={`mb-1 text-gray-400 transition-opacity duration-500 ${count === undefined ? 'opacity-0' : 'opacity-100'}`}
+			>
+				{count === undefined ? ' ' : `${count.toLocaleString('en-US')} songs played so far`}
+			</div>
 			Made with ❤️ by Daniel Skowron
 		</footer>
 	);
