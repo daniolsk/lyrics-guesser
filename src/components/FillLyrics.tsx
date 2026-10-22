@@ -14,6 +14,10 @@ import { DEFAULT_ERROR, requestSong } from '@/utils/requestSong';
 import Footer from '@/components/ui/Footer';
 import Loading from '@/components/ui/Loading';
 
+// Leaves room for a wrong guess, but keeps it short enough that showing it crossed out next to
+// the answer can't stretch the line.
+const getMaxGuessLength = (answer: string) => Math.max(answer.length * 2, 8);
+
 type Round = {
 	song: Song;
 	// Which of the two shown verses has the gaps.
@@ -170,6 +174,7 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 					aria-label={`Missing word ${part.blank + 1}`}
 					autoFocus={part.blank === 0}
 					autoComplete="off"
+					maxLength={getMaxGuessLength(part.answer)}
 					autoCapitalize="none"
 					spellCheck={false}
 					value={guesses[part.blank] ?? ''}
