@@ -75,12 +75,17 @@ export async function guessSong(
 			}
 
 			try {
-				const lyrics = await getLyricsForTrack(track.randomTrack, artist, {
-					songTitle: track.randomTrack,
-					songImage: track.albumImage,
-					songArtist: track.artistName,
-					songArtistNames: track.artistNames,
-				});
+				const lyrics = await getLyricsForTrack(
+					track.randomTrack,
+					artist,
+					{
+						songTitle: track.randomTrack,
+						songImage: track.albumImage,
+						songArtist: track.artistName,
+						songArtistNames: track.artistNames,
+					},
+					Math.round(track.durationMs / 1000),
+				);
 
 				if (isValidLyrics(lyrics)) {
 					randomSong = track;

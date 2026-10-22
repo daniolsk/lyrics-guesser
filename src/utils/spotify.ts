@@ -19,6 +19,7 @@ type Album = {
 
 type Track = {
 	name: string;
+	duration_ms: number;
 	preview_url: string | null;
 	id: string;
 	external_urls: { spotify: string };
@@ -28,6 +29,7 @@ type Track = {
 export type TrackResult = {
 	randomTrack: string;
 	songKey: string;
+	durationMs: number;
 	previewUrl: string | null;
 	url: string;
 	id: string;
@@ -74,6 +76,7 @@ const shuffle = <T>(items: T[]) => {
 const toTrackResult = (track: Track, album: Album, fallbackArtistName: string): TrackResult => ({
 	randomTrack: track.name,
 	songKey: getSongKey(track.name),
+	durationMs: track.duration_ms,
 	previewUrl: track.preview_url ?? null,
 	url: track.external_urls.spotify,
 	id: track.id,

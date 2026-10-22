@@ -5,7 +5,8 @@ import { logRequest, timed } from '@/utils/requestLog';
 import { Lyrics } from '@/utils/types';
 
 const MIN_LYRIC_LINES = 4;
-const LRCLIB_TIMEOUT_MS = 12_000;
+const LRCLIB_TIMEOUT_MS = 6_000;
+const LRCLIB_RETRY_DELAY_MS = 500;
 const LRCLIB_USER_AGENT = 'lyrics-guesser/0.1.0 (https://guessthesong.vercel.app)';
 
 const isInstrumentalTitle = (title: string) => title.toLowerCase().includes('instrumental');
@@ -108,46 +109,61 @@ export class LyricsUnavailableError extends Error {
 	}
 }
 
-// Returns null when the request failed, as opposed to an empty list of results.
-const searchLrclib = async (params: URLSearchParams): Promise<LrclibResult[] | null> => {
+type LrclibResponse<T> = { status: 'ok'; data: T } | { status: 'not-found' } | { status: 'error' };
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+// LRCLIB is often briefly overloaded (503), so a failed request is retried once. Timeouts
+// are not retried, as they already took long and the service is likely struggling.
+const lrclibRequest = async <T>(
+	path: string,
+	params: URLSearchParams,
+	retriesLeft = 1,
+): Promise<LrclibResponse<T>> => {
 	const startedAt = Date.now();
-	const label = `GET /api/search?${params}`;
-	const controller = new AbortController();
-	const timeout = setTimeout(() => controller.abort(), LRCLIB_TIMEOUT_MS);
+	const label = `GET ${path}?${params}`;
 
 	try {
-		const response = await fetch(`https://lrclib.net/api/search?${params}`, {
+		const response = await fetch(`https://lrclib.net${path}?${params}`, {
 			headers: {
 				'User-Agent': LRCLIB_USER_AGENT,
 			},
-			signal: controller.signal,
+			signal: AbortSignal.timeout(LRCLIB_TIMEOUT_MS),
 		});
+
+		if (response.status === 404) {
+			logRequest('LRCLIB', label, startedAt, { status: 'not-found' });
+			return { status: 'not-found' };
+		}
 
 		if (!response.ok) {
 			logRequest('LRCLIB', label, startedAt, {
 				status: 'error',
 				httpStatus: response.status,
-				results: 0,
+				retriesLeft,
 			});
-			return null;
+			if (retriesLeft > 0 && (response.status === 429 || response.status >= 500)) {
+				await wait(LRCLIB_RETRY_DELAY_MS);
+				return lrclibRequest(path, params, retriesLeft - 1);
+			}
+			return { status: 'error' };
 		}
 
-		const results = (await response.json()) as LrclibResult[];
-		const items = Array.isArray(results) ? results : [];
-		logRequest('LRCLIB', label, startedAt, {
-			status: 'ok',
-			results: items.length,
-		});
-		return items;
+		const data = (await response.json()) as T;
+		logRequest('LRCLIB', label, startedAt, { status: 'ok' });
+		return { status: 'ok', data };
 	} catch (error) {
+		const timedOut = error instanceof DOMException && error.name === 'TimeoutError';
 		logRequest('LRCLIB', label, startedAt, {
 			status: 'error',
 			error: error instanceof Error ? error.message : String(error),
-			results: 0,
+			retriesLeft,
 		});
-		return null;
-	} finally {
-		clearTimeout(timeout);
+		if (retriesLeft > 0 && !timedOut) {
+			await wait(LRCLIB_RETRY_DELAY_MS);
+			return lrclibRequest(path, params, retriesLeft - 1);
+		}
+		return { status: 'error' };
 	}
 };
 
@@ -204,36 +220,48 @@ const pickBestLrclibMatch = (
 	return candidates[0]?.lyricsText ?? null;
 };
 
-const getLyricsTextFromLrclib = async (title: string, artists: string[] = []): Promise<string> => {
+// Tries LRCLIB's exact lookup first (fast and cheap), and falls back to a fuzzy search
+// only when it finds nothing usable.
+const getLyricsTextFromLrclib = async (
+	title: string,
+	artists: string[],
+	durationSeconds?: number,
+): Promise<string> => {
 	return timed('LRCLIB', `getLyricsText("${title}")`, async () => {
 		const artistNames = expandArtistNames(artists);
 		const primaryArtist = artistNames[0] ?? '';
 
-		const resultSets = await Promise.all([
-			searchLrclib(new URLSearchParams({ q: `${primaryArtist} ${title}` })),
-			primaryArtist
-				? searchLrclib(
-						new URLSearchParams({
-							track_name: title,
-							artist_name: primaryArtist,
-						}),
-					)
-				: Promise.resolve([]),
-		]);
+		if (primaryArtist) {
+			const params = new URLSearchParams({ track_name: title, artist_name: primaryArtist });
+			if (durationSeconds) {
+				// Picks the version closest in length, e.g. the studio recording over a live one.
+				params.set('duration', String(durationSeconds));
+			}
 
-		const resultsById = new Map<number, LrclibResult>();
-		for (const resultSet of resultSets) {
-			for (const result of resultSet ?? []) {
-				resultsById.set(result.id, result);
+			const exact = await lrclibRequest<LrclibResult>('/api/get', params);
+			if (exact.status === 'error') {
+				throw new LyricsUnavailableError();
+			}
+			if (exact.status === 'ok') {
+				const match = pickBestLrclibMatch([exact.data], title, artistNames);
+				if (match) {
+					return match;
+				}
 			}
 		}
 
-		const match = pickBestLrclibMatch(Array.from(resultsById.values()), title, artistNames);
+		const search = await lrclibRequest<LrclibResult[]>(
+			'/api/search',
+			new URLSearchParams({ q: `${primaryArtist} ${title}`.trim() }),
+		);
+		if (search.status === 'error') {
+			throw new LyricsUnavailableError();
+		}
 
+		const results = search.status === 'ok' && Array.isArray(search.data) ? search.data : [];
+		const match = pickBestLrclibMatch(results, title, artistNames);
 		if (!match) {
-			throw resultSets.includes(null)
-				? new LyricsUnavailableError()
-				: new Error('Lyrics not found');
+			throw new Error('Lyrics not found');
 		}
 
 		return match;
@@ -268,21 +296,23 @@ export const getLyricsForTrack = async (
 	title: string,
 	queryArtist: string,
 	metadata: SongMetadata,
+	durationSeconds?: number,
 ): Promise<Lyrics> => {
 	return timed('Lyrics', `getLyricsForTrack("${title}")`, async () => {
 		if (isInstrumentalTitle(title)) {
 			throw new Error('Lyrics not found');
 		}
 
+		// Spotify's artist name first: it matches LRCLIB's data better than what was typed.
 		const artistHints = expandArtistNames([
-			queryArtist,
 			metadata.songArtist,
 			metadata.songArtistNames,
+			queryArtist,
 		]);
 
 		const searchTitle = getSearchTitle(title);
 
-		const lyricsText = await getLyricsTextFromLrclib(searchTitle, artistHints);
+		const lyricsText = await getLyricsTextFromLrclib(searchTitle, artistHints, durationSeconds);
 		return buildLyricsFromText(lyricsText, metadata);
 	});
 };
