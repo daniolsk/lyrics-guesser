@@ -3,7 +3,20 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import { guessSong } from '@/utils/guessSong';
 import { Song } from '@/utils/types';
 
-type GuessResponse = { song: Song } | { error: string };
+const MAX_SONG_KEYS = 50;
+const MAX_SONG_KEY_LENGTH = 200;
+
+const parseSongKeys = (value: string | string[] | undefined) =>
+	typeof value === 'string'
+		? value
+				.split(',')
+				.map((key) => key.trim())
+				.filter((key) => key && key.length <= MAX_SONG_KEY_LENGTH)
+				.slice(-MAX_SONG_KEYS)
+		: [];
+
+type GuessResponse =
+	{ song: Song; noLyricsSongs: string[] } | { error: string; noLyricsSongs?: string[] };
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse<GuessResponse>) {
 	if (req.method !== 'GET') {
@@ -22,10 +35,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse<
 		});
 	}
 
-	const result = await guessSong(artist.trim(), market);
+	const result = await guessSong(artist.trim(), market, {
+		seen: parseSongKeys(req.query.seen),
+		noLyrics: parseSongKeys(req.query.noLyrics),
+	});
 
 	if ('error' in result) {
-		return res.status(result.status).json({ error: result.error });
+		return res
+			.status(result.status)
+			.json({ error: result.error, noLyricsSongs: result.noLyricsSongs });
 	}
 
 	return res.status(200).json(result);

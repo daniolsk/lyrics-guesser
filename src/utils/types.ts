@@ -2,6 +2,8 @@ export interface Song extends Lyrics {
 	previewUrl: string | null;
 	url: string;
 	id: string;
+	// Version-independent song identifier, used to avoid repeating songs.
+	songKey: string;
 }
 
 export type Lyrics = {

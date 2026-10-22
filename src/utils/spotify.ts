@@ -1,4 +1,5 @@
 import { UserFacingError } from '@/utils/errors';
+import { getSongKey } from '@/utils/matchTitle';
 import { logRequest, timed } from '@/utils/requestLog';
 import { levenshtein, normalize } from '@/utils/text';
 
@@ -26,6 +27,7 @@ type Track = {
 
 export type TrackResult = {
 	randomTrack: string;
+	songKey: string;
 	previewUrl: string | null;
 	url: string;
 	id: string;
@@ -38,24 +40,40 @@ export type ArtistContext = {
 	artistId: string;
 	artistName: string;
 	albums: Album[];
+	albumTracks: Map<string, Promise<Track[]>>;
+	// Songs the player saw recently, mapped to their order (0 = seen longest ago).
+	seenSongs: Map<string, number>;
+	// Songs we failed to find lyrics for before; picked only when nothing else is left.
+	noLyricsSongs: Set<string>;
+	// Songs already picked during this request, never picked twice.
+	triedSongs: Set<string>;
+};
+
+export type SongHistory = {
+	seen: string[];
+	noLyrics: string[];
 };
 
 let cachedToken: { accessToken: string; expiresAt: number } | null = null;
 
 const isInstrumentalTrack = (trackName: string) => trackName.toLowerCase().includes('instrumental');
 
-const pickRandomTrack = (tracks: Track[]) => {
-	const playableTracks = tracks.filter((track) => !isInstrumentalTrack(track.name));
+const MAX_ALBUMS_TO_SEARCH = 4;
 
-	if (!playableTracks.length) {
-		throw new Error('No playable tracks found');
+const pickRandom = <T>(items: T[]) => items[Math.floor(Math.random() * items.length)];
+
+const shuffle = <T>(items: T[]) => {
+	const shuffled = [...items];
+	for (let i = shuffled.length - 1; i > 0; i--) {
+		const j = Math.floor(Math.random() * (i + 1));
+		[shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
 	}
-
-	return playableTracks[Math.floor(Math.random() * playableTracks.length)];
+	return shuffled;
 };
 
 const toTrackResult = (track: Track, album: Album, fallbackArtistName: string): TrackResult => ({
 	randomTrack: track.name,
+	songKey: getSongKey(track.name),
 	previewUrl: track.preview_url ?? null,
 	url: track.external_urls.spotify,
 	id: track.id,
@@ -193,6 +211,7 @@ const isSimilarArtistName = (query: string, name: string) => {
 export const prepareArtistContext = async (
 	artistName: string,
 	market?: string,
+	history: SongHistory = { seen: [], noLyrics: [] },
 ): Promise<ArtistContext> => {
 	return timed('Spotify', `prepareArtistContext("${artistName}")`, async () => {
 		const data = await spotifyFetch<{
@@ -236,16 +255,64 @@ export const prepareArtistContext = async (
 			artistId: artist.id,
 			artistName: artist.name,
 			albums,
+			albumTracks: new Map(),
+			seenSongs: new Map(history.seen.map((key, index) => [key, index])),
+			noLyricsSongs: new Set(history.noLyrics),
+			triedSongs: new Set(),
 		};
 	});
 };
 
+const getCachedAlbumTracks = (context: ArtistContext, albumId: string) => {
+	let tracks = context.albumTracks.get(albumId);
+	if (!tracks) {
+		tracks = getAlbumTracks(albumId);
+		context.albumTracks.set(albumId, tracks);
+	}
+	return tracks;
+};
+
+// Lower is better: unseen songs first, then songs seen longest ago, then songs that
+// had no lyrics before (lyrics may have been added since).
+const getTrackRank = (context: ArtistContext, songKey: string) => {
+	if (context.noLyricsSongs.has(songKey)) {
+		return context.seenSongs.size + 1;
+	}
+	return context.seenSongs.get(songKey) ?? -1;
+};
+
+// Picks a random track the player hasn't seen recently. Looks through a few random
+// albums; once every song there was seen, picks the one seen longest ago instead.
 export const getRandomTrackFromContext = async (context: ArtistContext): Promise<TrackResult> => {
 	return timed('Spotify', 'getRandomTrackFromContext', async () => {
-		const randomAlbum = context.albums[Math.floor(Math.random() * context.albums.length)];
-		const tracks = await getAlbumTracks(randomAlbum.id);
-		const randomTrack = pickRandomTrack(tracks);
+		const albums = shuffle(context.albums).slice(0, MAX_ALBUMS_TO_SEARCH);
+		const candidates: { track: Track; album: Album; songKey: string; rank: number }[] = [];
 
-		return toTrackResult(randomTrack, randomAlbum, context.artistName);
+		for (const album of albums) {
+			for (const track of await getCachedAlbumTracks(context, album.id)) {
+				const songKey = getSongKey(track.name);
+				if (isInstrumentalTrack(track.name) || context.triedSongs.has(songKey)) {
+					continue;
+				}
+				candidates.push({ track, album, songKey, rank: getTrackRank(context, songKey) });
+			}
+
+			// Stop early once there are unseen songs to pick from.
+			if (candidates.some((candidate) => candidate.rank === -1)) {
+				break;
+			}
+		}
+
+		// Another attempt may have picked a song while we were waiting for track lists.
+		const available = candidates.filter((candidate) => !context.triedSongs.has(candidate.songKey));
+		if (!available.length) {
+			throw new Error('No playable tracks found');
+		}
+
+		const bestRank = Math.min(...available.map((candidate) => candidate.rank));
+		const picked = pickRandom(available.filter((candidate) => candidate.rank === bestRank));
+		context.triedSongs.add(picked.songKey);
+
+		return toTrackResult(picked.track, picked.album, context.artistName);
 	});
 };

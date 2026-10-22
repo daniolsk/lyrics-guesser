@@ -21,6 +21,10 @@ const stripTrailingBrackets = (title: string) =>
 export const getSearchTitle = (title: string) =>
 	stripTrailingBrackets(stripSuffix(title)).trim() || title.trim();
 
+// Identifies a song regardless of version, so "Song - Remastered" and "Song - Live"
+// count as the same song when avoiding repeats.
+export const getSongKey = (title: string) => normalize(getSearchTitle(title));
+
 const getCandidates = (title: string) => {
 	const candidates = [
 		title,

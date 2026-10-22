@@ -8,6 +8,7 @@ import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
 
 import { Song } from '@/utils/types';
 import { isCorrectGuess } from '@/utils/matchTitle';
+import { addNoLyricsSongs, addSeenSong, getNoLyricsSongs, getSeenSongs } from '@/utils/seenSongs';
 import Footer from '@/components/ui/Footer';
 import Loading from '@/components/ui/Loading';
 
@@ -24,6 +25,14 @@ const requestSong = async (
 	if (market) {
 		params.set('market', market);
 	}
+	const seenSongs = getSeenSongs(artist);
+	if (seenSongs.length) {
+		params.set('seen', seenSongs.join(','));
+	}
+	const noLyricsSongs = getNoLyricsSongs(artist);
+	if (noLyricsSongs.length) {
+		params.set('noLyrics', noLyricsSongs.join(','));
+	}
 
 	let response: Response;
 	try {
@@ -34,6 +43,10 @@ const requestSong = async (
 
 	// Timeouts and crashes from the hosting platform may not return JSON.
 	const data = await response.json().catch(() => null);
+
+	if (Array.isArray(data?.noLyricsSongs)) {
+		addNoLyricsSongs(artist, data.noLyricsSongs);
+	}
 
 	if (response.ok && data?.song) {
 		return { song: data.song };
@@ -87,6 +100,7 @@ function Guess({ artist, market }: { artist: string; market?: string }) {
 				}
 
 				if ('song' in result) {
+					addSeenSong(artist, result.song.songKey);
 					setSong(result.song);
 				} else {
 					setError(result.error);

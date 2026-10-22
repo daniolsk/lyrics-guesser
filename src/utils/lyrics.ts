@@ -102,7 +102,17 @@ const getLrclibLyricsText = (result: LrclibResult): string | null => {
 	return null;
 };
 
-const searchLrclib = async (params: URLSearchParams): Promise<LrclibResult[]> => {
+// Thrown when a lyrics service failed (error status, timeout), so we can't tell whether
+// the song has lyrics. Unlike "Lyrics not found", the song shouldn't be avoided later.
+export class LyricsUnavailableError extends Error {
+	constructor() {
+		super('Lyrics service unavailable');
+		this.name = 'LyricsUnavailableError';
+	}
+}
+
+// Returns null when the request failed, as opposed to an empty list of results.
+const searchLrclib = async (params: URLSearchParams): Promise<LrclibResult[] | null> => {
 	const startedAt = Date.now();
 	const label = `GET /api/search?${params}`;
 	const controller = new AbortController();
@@ -122,7 +132,7 @@ const searchLrclib = async (params: URLSearchParams): Promise<LrclibResult[]> =>
 				httpStatus: response.status,
 				results: 0,
 			});
-			return [];
+			return null;
 		}
 
 		const results = (await response.json()) as LrclibResult[];
@@ -138,7 +148,7 @@ const searchLrclib = async (params: URLSearchParams): Promise<LrclibResult[]> =>
 			error: error instanceof Error ? error.message : String(error),
 			results: 0,
 		});
-		return [];
+		return null;
 	} finally {
 		clearTimeout(timeout);
 	}
@@ -216,7 +226,7 @@ const getLyricsTextFromLrclib = async (title: string, artists: string[] = []): P
 
 		const resultsById = new Map<number, LrclibResult>();
 		for (const resultSet of resultSets) {
-			for (const result of resultSet) {
+			for (const result of resultSet ?? []) {
 				resultsById.set(result.id, result);
 			}
 		}
@@ -224,7 +234,9 @@ const getLyricsTextFromLrclib = async (title: string, artists: string[] = []): P
 		const match = pickBestLrclibMatch(Array.from(resultsById.values()), title, artistNames);
 
 		if (!match) {
-			throw new Error('Lyrics not found');
+			throw resultSets.includes(null)
+				? new LyricsUnavailableError()
+				: new Error('Lyrics not found');
 		}
 
 		return match;
@@ -332,10 +344,12 @@ export const getLyricsForTrack = async (
 
 		const searchTitle = getSearchTitle(title);
 
+		let lrclibUnavailable = false;
 		try {
 			const lyricsText = await getLyricsTextFromLrclib(searchTitle, artistHints);
 			return buildLyricsFromText(lyricsText, metadata);
-		} catch {
+		} catch (error) {
+			lrclibUnavailable = error instanceof LyricsUnavailableError;
 			// Genius scrapes HTML and is often blocked from Vercel — use only as fallback.
 		}
 
@@ -346,6 +360,6 @@ export const getLyricsForTrack = async (
 			}
 		}
 
-		throw new Error('Lyrics not found');
+		throw lrclibUnavailable ? new LyricsUnavailableError() : new Error('Lyrics not found');
 	});
 };
