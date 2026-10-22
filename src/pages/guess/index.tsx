@@ -11,7 +11,9 @@ import { isCorrectGuess } from '@/utils/matchTitle';
 import Footer from '@/components/ui/Footer';
 import Loading from '@/components/ui/Loading';
 
-const DEFAULT_ERROR = 'Something went wrong - try again later';
+const DEFAULT_ERROR = 'Something went wrong on our side. Try again in a moment.';
+const CONNECTION_ERROR = "Couldn't reach the server. Check your internet connection and try again.";
+const TIMEOUT_ERROR = 'Finding a song took too long. Try again.';
 
 const requestSong = async (
 	artist: string,
@@ -23,20 +25,25 @@ const requestSong = async (
 		params.set('market', market);
 	}
 
+	let response: Response;
 	try {
-		const response = await fetch(`/api/guess?${params.toString()}`, {
-			signal,
-		});
-		const data = await response.json();
-
-		if (!response.ok) {
-			return { error: data.error ?? DEFAULT_ERROR };
-		}
-
-		return { song: data.song };
+		response = await fetch(`/api/guess?${params.toString()}`, { signal });
 	} catch {
-		return { error: DEFAULT_ERROR };
+		return { error: CONNECTION_ERROR };
 	}
+
+	// Timeouts and crashes from the hosting platform may not return JSON.
+	const data = await response.json().catch(() => null);
+
+	if (response.ok && data?.song) {
+		return { song: data.song };
+	}
+
+	if (data?.error) {
+		return { error: data.error };
+	}
+
+	return { error: response.status === 504 ? TIMEOUT_ERROR : DEFAULT_ERROR };
 };
 
 export default function GuessPage() {

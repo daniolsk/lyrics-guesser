@@ -1,6 +1,7 @@
 import { Client as GeniusClient } from 'genius-lyrics';
 import stringSim from 'string-similarity';
 
+import { getSearchTitle } from '@/utils/matchTitle';
 import { logRequest, timed } from '@/utils/requestLog';
 import { Lyrics } from '@/utils/types';
 
@@ -329,15 +330,17 @@ export const getLyricsForTrack = async (
 			metadata.songArtistNames,
 		]);
 
+		const searchTitle = getSearchTitle(title);
+
 		try {
-			const lyricsText = await getLyricsTextFromLrclib(title, artistHints);
+			const lyricsText = await getLyricsTextFromLrclib(searchTitle, artistHints);
 			return buildLyricsFromText(lyricsText, metadata);
 		} catch {
 			// Genius scrapes HTML and is often blocked from Vercel — use only as fallback.
 		}
 
 		if (process.env.VERCEL !== '1') {
-			const geniusLyrics = await getGeniusLyrics(title, queryArtist, metadata);
+			const geniusLyrics = await getGeniusLyrics(searchTitle, queryArtist, metadata);
 			if (geniusLyrics) {
 				return geniusLyrics;
 			}

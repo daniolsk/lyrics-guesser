@@ -1,3 +1,4 @@
+import { UserFacingError } from '@/utils/errors';
 import { logRequest, timed } from '@/utils/requestLog';
 
 const clientId = process.env.SPOTIFY_CLIENT_ID;
@@ -97,6 +98,16 @@ const getAccessToken = async (): Promise<string> => {
 	return cachedToken.accessToken;
 };
 
+class SpotifyRequestError extends Error {
+	constructor(
+		readonly status: number,
+		url: string,
+	) {
+		super(`Spotify request failed: ${status} ${url}`);
+		this.name = 'SpotifyRequestError';
+	}
+}
+
 const spotifyFetch = async <T>(url: string): Promise<T> => {
 	const path = url.replace('https://api.spotify.com', '');
 	return timed('Spotify', `GET ${path}`, async () => {
@@ -108,8 +119,15 @@ const spotifyFetch = async <T>(url: string): Promise<T> => {
 			},
 		});
 
+		if (response.status === 429) {
+			throw new UserFacingError(
+				'Too many people are playing right now. Wait a moment and try again.',
+				503,
+			);
+		}
+
 		if (!response.ok) {
-			throw new Error(`Spotify request failed: ${response.status} ${url}`);
+			throw new SpotifyRequestError(response.status, url);
 		}
 
 		return response.json();
@@ -150,16 +168,27 @@ export const prepareArtistContext = async (
 			`https://api.spotify.com/v1/search?query=${encodeURIComponent(artistName)}&type=artist${
 				market ? `&market=${encodeURIComponent(market)}` : ''
 			}&limit=1`,
-		);
+		).catch((error) => {
+			if (market && error instanceof SpotifyRequestError && error.status === 400) {
+				throw new UserFacingError(
+					`"${market}" isn't a valid country code. Use a two-letter code like PL or US, or leave it empty.`,
+					400,
+				);
+			}
+			throw error;
+		});
 
 		const artist = data.artists.items[0];
 		if (!artist) {
-			throw new Error(`Artist not found: ${artistName}`);
+			throw new UserFacingError(`We couldn't find an artist called "${artistName}".`, 404);
 		}
 
 		const albums = filterAlbums(await getAllArtistAlbums(artist.id));
 		if (!albums.length) {
-			throw new Error(`No albums found for artist: ${artistName}`);
+			throw new UserFacingError(
+				`${artist.name} doesn't have any albums we can pick songs from. Try another artist.`,
+				404,
+			);
 		}
 
 		return {

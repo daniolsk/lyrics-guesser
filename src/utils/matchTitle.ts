@@ -9,7 +9,7 @@ const SHORT_TITLE_MIN_LENGTH = 3;
 const normalize = (text: string) =>
 	text
 		.normalize('NFD')
-		.replace(/[̀-ͯ]/g, '')
+		.replace(/[\u0300-\u036f]/g, '')
 		.toLowerCase()
 		.replace(/&/g, ' and ')
 		.replace(/['’`]/g, '')
@@ -20,6 +20,15 @@ const normalize = (text: string) =>
 const stripSuffix = (title: string) => title.split(/\s[-–—]\s/)[0];
 
 const stripBrackets = (title: string) => title.replace(/\([^)]*\)|\[[^\]]*\]/g, ' ');
+
+const stripTrailingBrackets = (title: string) =>
+	title.replace(/(\s*(\([^)]*\)|\[[^\]]*\]))+\s*$/, '');
+
+// Drops version extras like " - Remastered 2011", " (feat. X)" or " [Live]" so lyrics
+// searches find the original song. Leading brackets are part of the name, as in
+// "(I Can't Get No) Satisfaction", so they are kept.
+export const getSearchTitle = (title: string) =>
+	stripTrailingBrackets(stripSuffix(title)).trim() || title.trim();
 
 const getCandidates = (title: string) => {
 	const candidates = [

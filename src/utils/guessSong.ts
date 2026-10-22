@@ -1,9 +1,25 @@
+import { UserFacingError } from '@/utils/errors';
 import { logRequest } from '@/utils/requestLog';
 import { getLyricsForTrack, isValidLyrics } from '@/utils/lyrics';
-import { getRandomTrackFromContext, prepareArtistContext, TrackResult } from '@/utils/spotify';
+import {
+	ArtistContext,
+	getRandomTrackFromContext,
+	prepareArtistContext,
+	TrackResult,
+} from '@/utils/spotify';
 import { Lyrics, Song } from '@/utils/types';
 
-export type GuessSongResult = { song: Song } | { error: string };
+const MAX_ATTEMPTS = 3;
+const DEFAULT_ERROR = 'Something went wrong on our side. Try again in a moment.';
+
+export type GuessSongResult = { song: Song } | { error: string; status: number };
+
+const fetchTrack = (context: ArtistContext) => {
+	const track = getRandomTrackFromContext(context);
+	// Mark as handled so a prefetched track that is never awaited can't crash the process.
+	track.catch(() => {});
+	return track;
+};
 
 export async function guessSong(artist: string, market?: string): Promise<GuessSongResult> {
 	const requestStartedAt = Date.now();
@@ -17,14 +33,28 @@ export async function guessSong(artist: string, market?: string): Promise<GuessS
 		let lyricsObj: Lyrics | null = null;
 		let attempts = 0;
 
-		let nextTrackPromise = getRandomTrackFromContext(artistContext);
+		let nextTrackPromise = fetchTrack(artistContext);
 
-		for (let attempt = 0; attempt < 3 && !lyricsObj; attempt++) {
-			attempts = attempt + 1;
+		for (let attempt = 1; attempt <= MAX_ATTEMPTS && !lyricsObj; attempt++) {
+			attempts = attempt;
 			const attemptStartedAt = Date.now();
-			const track = await nextTrackPromise;
-			nextTrackPromise = getRandomTrackFromContext(artistContext);
-			logRequest('Guess', `attempt ${attempt + 1} track`, attemptStartedAt, {
+			const trackPromise = nextTrackPromise;
+			if (attempt < MAX_ATTEMPTS) {
+				nextTrackPromise = fetchTrack(artistContext);
+			}
+
+			let track: TrackResult;
+			try {
+				track = await trackPromise;
+			} catch (error) {
+				logRequest('Guess', `attempt ${attempt} track`, attemptStartedAt, {
+					status: 'error',
+					error: error instanceof Error ? error.message : String(error),
+				});
+				continue;
+			}
+
+			logRequest('Guess', `attempt ${attempt} track`, attemptStartedAt, {
 				status: 'ok',
 				track: track.randomTrack,
 			});
@@ -40,13 +70,13 @@ export async function guessSong(artist: string, market?: string): Promise<GuessS
 				if (isValidLyrics(lyrics)) {
 					randomSong = track;
 					lyricsObj = lyrics;
-					logRequest('Guess', `attempt ${attempt + 1} lyrics`, attemptStartedAt, {
+					logRequest('Guess', `attempt ${attempt} lyrics`, attemptStartedAt, {
 						status: 'ok',
 						song: lyrics.songTitle,
 					});
 				}
 			} catch (error) {
-				logRequest('Guess', `attempt ${attempt + 1} lyrics`, attemptStartedAt, {
+				logRequest('Guess', `attempt ${attempt} lyrics`, attemptStartedAt, {
 					status: 'error',
 					track: track.randomTrack,
 					error: error instanceof Error ? error.message : String(error),
@@ -55,11 +85,10 @@ export async function guessSong(artist: string, market?: string): Promise<GuessS
 		}
 
 		if (!lyricsObj || !randomSong) {
-			logRequest('Guess', `GET /guess?artist=${artist}`, requestStartedAt, {
-				status: 'error',
-				error: 'Lyrics not found',
-			});
-			throw new Error('Lyrics not found!');
+			throw new UserFacingError(
+				`We couldn't find lyrics for ${artistContext.artistName} songs this time. Try again or pick another artist.`,
+				404,
+			);
 		}
 
 		const songObj: Song = {
@@ -82,8 +111,10 @@ export async function guessSong(artist: string, market?: string): Promise<GuessS
 			error: error instanceof Error ? error.message : String(error),
 		});
 
-		return {
-			error: 'Something went wrong - try again later',
-		};
+		if (error instanceof UserFacingError) {
+			return { error: error.message, status: error.status };
+		}
+
+		return { error: DEFAULT_ERROR, status: 500 };
 	}
 }
