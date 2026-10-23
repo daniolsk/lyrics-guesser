@@ -18,12 +18,6 @@ import Loading from '@/components/ui/Loading';
 // the answer can't stretch the line.
 const getMaxGuessLength = (answer: string) => Math.max(answer.length * 2, 8);
 
-// Every box in a round gets the same width, so it can't hint at which word is longer, but it's
-// always wider than the longest hidden word so the answer fits.
-const MIN_BOX_LENGTH = 8;
-const getBoxWidth = (answers: string[]) =>
-	`${Math.max(MIN_BOX_LENGTH, ...answers.map((answer) => answer.length)) + 2}ch`;
-
 type Round = {
 	song: Song;
 	lines: string[];
@@ -192,25 +186,31 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 				);
 			}
 
+			// Sized to the hidden word, a hint like the gaps in a crossword. An invisible copy of the
+			// word sets the width, so wide letters like "w" and "m" still fit.
 			return (
-				<input
-					key={index}
-					type="text"
-					aria-label={`Missing word ${part.blank + 1}`}
-					autoFocus={part.blank === 0}
-					autoComplete="off"
-					maxLength={getMaxGuessLength(part.answer)}
-					autoCapitalize="none"
-					spellCheck={false}
-					value={guesses[part.blank] ?? ''}
-					onChange={(e) =>
-						setGuesses((current) =>
-							current.map((guess, blank) => (blank === part.blank ? e.target.value : guess)),
-						)
-					}
-					style={{ width: getBoxWidth(round?.answers ?? []) }}
-					className="mx-1 border-b-2 bg-transparent text-center font-semibold italic focus:outline-hidden active:outline-hidden"
-				/>
+				<span key={index} className="mx-1 inline-grid">
+					<span aria-hidden className="invisible col-start-1 row-start-1 px-2 whitespace-pre">
+						{part.answer}
+					</span>
+					<input
+						type="text"
+						size={1}
+						aria-label={`Missing word ${part.blank + 1}`}
+						autoFocus={part.blank === 0}
+						autoComplete="off"
+						maxLength={getMaxGuessLength(part.answer)}
+						autoCapitalize="none"
+						spellCheck={false}
+						value={guesses[part.blank] ?? ''}
+						onChange={(e) =>
+							setGuesses((current) =>
+								current.map((guess, blank) => (blank === part.blank ? e.target.value : guess)),
+							)
+						}
+						className="col-start-1 row-start-1 w-full min-w-[3ch] border-b-2 bg-transparent text-center font-semibold italic focus:outline-hidden active:outline-hidden"
+					/>
+				</span>
 			);
 		});
 
