@@ -18,25 +18,50 @@ import Loading from '@/components/ui/Loading';
 // the answer can't stretch the line.
 const getMaxGuessLength = (answer: string) => Math.max(answer.length * 2, 8);
 
+// Every box in a round gets the same width, so it can't hint at which word is longer, but it's
+// always wider than the longest hidden word so the answer fits.
+const MIN_BOX_LENGTH = 8;
+const getBoxWidth = (answers: string[]) =>
+	`${Math.max(MIN_BOX_LENGTH, ...answers.map((answer) => answer.length)) + 2}ch`;
+
 type Round = {
 	song: Song;
-	// Which of the two shown verses has the gaps.
-	blankedVerse: 'first' | 'second';
+	lines: string[];
+	// Index of the line in `lines` that has the gaps.
+	blankedLine: number;
 	parts: LyricsPart[];
 	answers: string[];
 };
 
-// Gaps go in the second verse so the first one sets the scene, unless it has no words to hide.
-// When neither verse has a gap worth guessing, any single word of the second one will do.
+const shuffle = <T,>(items: T[]) => {
+	const shuffled = [...items];
+	for (let index = shuffled.length - 1; index > 0; index--) {
+		const other = Math.floor(Math.random() * (index + 1));
+		[shuffled[index], shuffled[other]] = [shuffled[other], shuffled[index]];
+	}
+	return shuffled;
+};
+
+// The gaps go in a random one of the four lines that has words worth hiding. When none does,
+// any single word of any line will do.
 const createRound = (song: Song): Round => {
-	const secondParts = blankVerse(song.secondVerse);
-	const firstParts = secondParts ? null : blankVerse(song.firstVerse);
-	const parts = secondParts ??
-		firstParts ??
-		blankVerse(song.secondVerse, 1) ?? [{ text: song.secondVerse }];
+	const lines = [song.firstVerse, song.secondVerse, ...song.nextVerses];
+	const order = shuffle(lines.map((_, index) => index));
+	const pick = (minSingleWordLength?: number) => {
+		for (const index of order) {
+			const parts = blankVerse(lines[index], minSingleWordLength);
+			if (parts) {
+				return { blankedLine: index, parts };
+			}
+		}
+		return null;
+	};
+	const { blankedLine, parts } = pick() ??
+		pick(1) ?? { blankedLine: 1, parts: [{ text: song.secondVerse }] };
 	return {
 		song,
-		blankedVerse: firstParts ? 'first' : 'second',
+		lines,
+		blankedLine,
 		parts,
 		answers: parts.flatMap((part) => ('answer' in part ? [part.answer] : [])),
 	};
@@ -183,8 +208,7 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 							current.map((guess, blank) => (blank === part.blank ? e.target.value : guess)),
 						)
 					}
-					// Sized to the hidden word, a hint like the gaps in a crossword.
-					style={{ width: `${Math.max(part.answer.length, 2) + 1}ch` }}
+					style={{ width: getBoxWidth(round?.answers ?? []) }}
 					className="mx-1 border-b-2 bg-transparent text-center font-semibold italic focus:outline-hidden active:outline-hidden"
 				/>
 			);
@@ -261,21 +285,11 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 						</div>
 						<form className="flex flex-col items-center" onSubmit={(e) => handleSubmit(e)}>
 							<div className="mb-6 text-center font-semibold italic">
-								<div className="text-base sm:text-lg md:text-xl">
-									&quot;
-									{round.blankedVerse === 'first'
-										? renderBlankedVerse(round.parts)
-										: round.song.firstVerse}
-								</div>
-								<div className="text-base sm:text-lg md:text-xl">
-									{round.blankedVerse === 'second'
-										? renderBlankedVerse(round.parts)
-										: round.song.secondVerse}
-								</div>
-								{round.song.nextVerses.map((verse, index) => (
+								{round.lines.map((line, index) => (
 									<div key={index} className="text-base sm:text-lg md:text-xl">
-										{verse}
-										{index === 1 ? '"' : ''}
+										{index === 0 ? '"' : ''}
+										{index === round.blankedLine ? renderBlankedVerse(round.parts) : line}
+										{index === round.lines.length - 1 ? '"' : ''}
 									</div>
 								))}
 							</div>
