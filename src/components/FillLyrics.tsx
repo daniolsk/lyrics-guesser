@@ -168,7 +168,7 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 
 	const isCorrect = results.length > 0 && results.every(Boolean);
 	const verdict = gaveUp
-		? 'The answer was…'
+		? 'Maybe next time'
 		: isCorrect
 			? 'Nailed it!'
 			: results.some(Boolean)
