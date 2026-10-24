@@ -7,9 +7,9 @@ import Footer from '@/components/ui/Footer';
 
 type Mode = 'song' | 'lyrics';
 
-const MODES: { value: Mode; label: string }[] = [
+const MODES: { value: Mode; label: string; isNew?: boolean }[] = [
 	{ value: 'song', label: 'Guess the title' },
-	{ value: 'lyrics', label: 'Fill in the lyrics' },
+	{ value: 'lyrics', label: 'Fill in the lyrics', isNew: true },
 ];
 
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
@@ -43,19 +43,24 @@ export default function Home({ searchParams }: { searchParams: SearchParams }) {
 						</span>
 					</div>
 					<div className="mb-4 flex gap-2">
-						{MODES.map(({ value, label }) => (
+						{MODES.map(({ value, label, isNew }) => (
 							<button
 								key={value}
 								type="button"
 								aria-pressed={mode === value}
 								onClick={() => setMode(value)}
-								className={`cursor-pointer border-2 px-3 py-1 text-sm font-semibold md:text-base ${
+								className={`relative cursor-pointer border-2 px-3 py-1 text-sm font-semibold md:text-base ${
 									mode === value
 										? 'border-white bg-white text-black'
 										: 'border-gray-500 text-gray-400 hover:border-white hover:text-white'
 								}`}
 							>
 								{label}
+								{isNew && (
+									<span className="animate-background-scroll absolute -top-2.5 -right-3 bg-linear-to-r from-red-400 to-green-400 bg-size-[500%] px-1.5 text-[10px] leading-4 font-extrabold tracking-wider text-black md:text-xs">
+										NEW
+									</span>
+								)}
 							</button>
 						))}
 					</div>
