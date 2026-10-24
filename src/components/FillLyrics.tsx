@@ -73,6 +73,7 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 	const [guesses, setGuesses] = useState<string[]>([]);
 	const [isGuessed, setIsGuessed] = useState(false);
 	const [results, setResults] = useState<boolean[]>([]);
+	const [gaveUp, setGaveUp] = useState(false);
 
 	const fetchIdRef = useRef(0);
 
@@ -108,6 +109,7 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 		setGuesses([]);
 		setIsGuessed(false);
 		setResults([]);
+		setGaveUp(false);
 
 		void loadSong();
 	};
@@ -160,11 +162,18 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 		}
 
 		setResults(round.answers.map(() => false));
+		setGaveUp(true);
 		setIsGuessed(true);
 	};
 
 	const isCorrect = results.length > 0 && results.every(Boolean);
-	const correctCount = results.filter(Boolean).length;
+	const verdict = gaveUp
+		? 'Maybe next time'
+		: isCorrect
+			? 'Nailed it!'
+			: results.some(Boolean)
+				? 'So close!'
+				: 'Not this time';
 
 	const renderBlankedVerse = (parts: LyricsPart[]) =>
 		parts.map((part, index) => {
@@ -294,10 +303,7 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 								))}
 							</div>
 							{isGuessed ? (
-								<div className="my-2 text-center text-2xl font-bold md:text-3xl">
-									{correctCount}/{round.answers.length}{' '}
-									{round.answers.length === 1 ? 'word' : 'words'} correct
-								</div>
+								<div className="my-2 text-center text-2xl font-bold md:text-3xl">{verdict}</div>
 							) : (
 								<div className="flex gap-4">
 									<input
