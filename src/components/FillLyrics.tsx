@@ -2,8 +2,6 @@
 
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
-import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AiOutlineInfoCircle } from 'react-icons/ai';
 
@@ -11,6 +9,7 @@ import { Song } from '@/utils/types';
 import { blankVerse, isCorrectWord, LyricsPart } from '@/utils/blankLyrics';
 import { addSeenSong } from '@/utils/seenSongs';
 import { DEFAULT_ERROR, requestSong } from '@/utils/requestSong';
+import SongCover from '@/components/SongCover';
 import Footer from '@/components/ui/Footer';
 import Loading from '@/components/ui/Loading';
 
@@ -268,22 +267,12 @@ export default function FillLyrics({ artist, market }: { artist: string; market?
 				) : (
 					<div className="flex w-full flex-col items-center">
 						{header}
-						<Link href={round.song.url} target="_blank" className="mt-4 mb-6 bg-gray-1000">
-							<div className="relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72">
-								<Image
-									fill
-									onContextMenu={(e) => e.preventDefault()}
-									src={round.song.songImage}
-									priority
-									quality={75}
-									sizes="(max-width: 768px) 100vw,
-									(max-width: 1200px) 50vw,
-									33vw"
-									alt="song image"
-									className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]`}
-								/>
-							</div>
-						</Link>
+						<SongCover
+							key={round.song.id}
+							song={round.song}
+							canPlay={isGuessed}
+							className="mt-4 mb-6"
+						/>
 						<div className="mb-6 flex flex-col items-center">
 							<div className="mb-1 text-center text-3xl font-bold md:text-4xl">
 								&quot;{round.song.songTitle}&quot;

@@ -3,7 +3,6 @@
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
 
 import Image from 'next/image';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { AiOutlineInfoCircle, AiFillQuestionCircle } from 'react-icons/ai';
 
@@ -11,6 +10,7 @@ import { Song } from '@/utils/types';
 import { isCorrectGuess } from '@/utils/matchTitle';
 import { addSeenSong } from '@/utils/seenSongs';
 import { DEFAULT_ERROR, requestSong } from '@/utils/requestSong';
+import SongCover from '@/components/SongCover';
 import Footer from '@/components/ui/Footer';
 import Loading from '@/components/ui/Loading';
 
@@ -157,22 +157,7 @@ export default function Guess({ artist, market }: { artist: string; market?: str
 							</h1>
 						</div>
 						{isGuessed ? (
-							<Link href={song.url} target="_blank" className="mt-4 mb-10 bg-gray-1000">
-								<div className="relative h-60 w-60 cursor-pointer rounded-md p-4 sm:h-72 sm:w-72">
-									<Image
-										fill
-										onContextMenu={(e) => e.preventDefault()}
-										src={song.songImage}
-										priority
-										quality={75}
-										sizes="(max-width: 768px) 100vw,
-										(max-width: 1200px) 50vw,
-										33vw"
-										alt="song image"
-										className={`object-cover shadow-[4.0px_8.0px_8.0px_rgba(0,0,0,0.38)]`}
-									/>
-								</div>
-							</Link>
+							<SongCover key={song.id} song={song} canPlay className="mt-4 mb-6" />
 						) : (
 							<div
 								className="relative mt-4 mb-10 h-60 w-60 bg-gray-1000 p-4 sm:h-72 sm:w-72"
