@@ -5,7 +5,7 @@ import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
-import { FaPause, FaPlay, FaSpotify } from 'react-icons/fa';
+import { FaPause, FaPlay, FaSpotify, FaVolumeDown, FaVolumeMute } from 'react-icons/fa';
 
 import { Song } from '@/utils/types';
 
@@ -25,6 +25,27 @@ const getPreviewUrl = async (song: Song) => {
 	return response.ok && typeof data?.previewUrl === 'string' ? (data.previewUrl as string) : null;
 };
 
+const VOLUME_STORAGE_KEY = 'previewVolume';
+const DEFAULT_VOLUME = 0.2;
+
+// The player's last chosen volume, kept between songs and visits.
+const readVolume = () => {
+	try {
+		const stored = Number(localStorage.getItem(VOLUME_STORAGE_KEY) ?? NaN);
+		return stored >= 0 && stored <= 1 ? stored : DEFAULT_VOLUME;
+	} catch {
+		return DEFAULT_VOLUME;
+	}
+};
+
+const writeVolume = (volume: number) => {
+	try {
+		localStorage.setItem(VOLUME_STORAGE_KEY, String(volume));
+	} catch {
+		// Storage can be unavailable (e.g. private mode); the volume then resets next time.
+	}
+};
+
 const STATUS_LABELS: Record<Status, string> = {
 	idle: 'Play a preview',
 	loading: 'Loading…',
@@ -34,7 +55,7 @@ const STATUS_LABELS: Record<Status, string> = {
 };
 
 // The album cover plays a short clip of the song when clicked, with a link to the full song on
-// Spotify below. Remount it (key it by song) for each song, so the clip of the last one stops.
+// Spotify and a volume slider below. Remount it (key it by song) for each song, so the clip of the last one stops.
 export default function SongCover({
 	song,
 	canPlay,
@@ -42,13 +63,14 @@ export default function SongCover({
 }: {
 	song: Song;
 	// The clip and the Spotify link would give the answer away while the player is still guessing,
-	// so both show up only after the guess. The link keeps its space so the page doesn't jump.
+	// so both show up only after the guess. The row below the cover keeps its space so the page doesn't jump.
 	canPlay: boolean;
 	className?: string;
 }) {
 	const audioRef = useRef<HTMLAudioElement>(null);
 	const [status, setStatus] = useState<Status>('idle');
 	const [progress, setProgress] = useState(0);
+	const [volume, setVolume] = useState(readVolume);
 
 	useEffect(
 		() => () => {
@@ -56,6 +78,14 @@ export default function SongCover({
 		},
 		[],
 	);
+
+	const changeVolume = (newVolume: number) => {
+		setVolume(newVolume);
+		writeVolume(newVolume);
+		if (audioRef.current) {
+			audioRef.current.volume = newVolume;
+		}
+	};
 
 	const togglePlayback = async () => {
 		const audio = audioRef.current;
@@ -79,7 +109,7 @@ export default function SongCover({
 		}
 
 		const newAudio = new Audio(previewUrl);
-		newAudio.volume = 0.3;
+		newAudio.volume = volume;
 		newAudio.addEventListener('playing', () => setStatus('playing'));
 		newAudio.addEventListener('pause', () => setStatus('paused'));
 		newAudio.addEventListener('ended', () => {
@@ -170,19 +200,41 @@ export default function SongCover({
 			) : (
 				<div className="relative h-60 w-60 bg-gray-1000 p-4 sm:h-72 sm:w-72">{cover}</div>
 			)}
-			<Link
-				href={song.url}
-				target="_blank"
-				rel="noopener noreferrer"
+			<div
 				aria-hidden={!canPlay}
-				tabIndex={canPlay ? undefined : -1}
-				className={`mt-3 flex items-center text-sm font-semibold text-gray-300 hover:text-white ${
+				className={`mt-3 flex w-60 items-center justify-between gap-4 sm:w-72 ${
 					canPlay ? '' : 'invisible'
 				}`}
 			>
-				<FaSpotify className="mr-2 text-[#1DB954]" size={18} />
-				Open in Spotify
-			</Link>
+				<Link
+					href={song.url}
+					target="_blank"
+					rel="noopener noreferrer"
+					tabIndex={canPlay ? undefined : -1}
+					className="flex shrink-0 items-center text-sm font-semibold text-gray-300 hover:text-white"
+				>
+					<FaSpotify className="mr-2 text-[#1DB954]" size={18} />
+					Open in Spotify
+				</Link>
+				<label className="flex min-w-0 items-center text-gray-300">
+					{volume === 0 ? (
+						<FaVolumeMute className="mr-2 shrink-0" size={16} />
+					) : (
+						<FaVolumeDown className="mr-2 shrink-0" size={16} />
+					)}
+					<input
+						type="range"
+						min={0}
+						max={1}
+						step={0.05}
+						value={volume}
+						onChange={(e) => changeVolume(Number(e.target.value))}
+						aria-label="Preview volume"
+						tabIndex={canPlay ? undefined : -1}
+						className="w-20 min-w-0 cursor-pointer accent-white sm:w-24"
+					/>
+				</label>
+			</div>
 		</div>
 	);
 }
