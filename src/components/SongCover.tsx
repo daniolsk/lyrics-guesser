@@ -41,7 +41,8 @@ export default function SongCover({
 	className,
 }: {
 	song: Song;
-	// The clip would give the answer away while the player is still guessing.
+	// The clip and the Spotify link would give the answer away while the player is still guessing,
+	// so both show up only after the guess. The link keeps its space so the page doesn't jump.
 	canPlay: boolean;
 	className?: string;
 }) {
@@ -78,7 +79,7 @@ export default function SongCover({
 		}
 
 		const newAudio = new Audio(previewUrl);
-		newAudio.volume = 0.6;
+		newAudio.volume = 0.3;
 		newAudio.addEventListener('playing', () => setStatus('playing'));
 		newAudio.addEventListener('pause', () => setStatus('paused'));
 		newAudio.addEventListener('ended', () => {
@@ -173,7 +174,11 @@ export default function SongCover({
 				href={song.url}
 				target="_blank"
 				rel="noopener noreferrer"
-				className="mt-3 flex items-center text-sm font-semibold text-gray-300 hover:text-white"
+				aria-hidden={!canPlay}
+				tabIndex={canPlay ? undefined : -1}
+				className={`mt-3 flex items-center text-sm font-semibold text-gray-300 hover:text-white ${
+					canPlay ? '' : 'invisible'
+				}`}
 			>
 				<FaSpotify className="mr-2 text-[#1DB954]" size={18} />
 				Open in Spotify
