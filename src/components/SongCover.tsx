@@ -202,7 +202,7 @@ export default function SongCover({
 			)}
 			<div
 				aria-hidden={!canPlay}
-				className={`mt-3 flex w-60 items-center justify-center gap-4 sm:w-72 sm:justify-between ${
+				className={`mt-3 flex w-60 items-center justify-center gap-4 sm:w-72 pointer-fine:justify-between ${
 					canPlay ? '' : 'invisible'
 				}`}
 			>
@@ -216,8 +216,9 @@ export default function SongCover({
 					<FaSpotify className="mr-2 text-[#1DB954]" size={18} />
 					Open in Spotify
 				</Link>
-				{/* Phones have volume buttons, so the slider would only crowd the row there. */}
-				<label className="hidden min-w-0 items-center text-gray-300 sm:flex">
+				{/* Touch devices have volume buttons, and iOS ignores the volume set by a page, so the slider
+					shows only with a mouse or trackpad. */}
+				<label className="hidden min-w-0 items-center text-gray-300 pointer-fine:flex">
 					{volume === 0 ? (
 						<FaVolumeMute className="mr-2 shrink-0" size={16} />
 					) : (
