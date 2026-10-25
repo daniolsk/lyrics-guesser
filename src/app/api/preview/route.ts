@@ -18,9 +18,10 @@ export async function GET(request: NextRequest) {
 		return NextResponse.json({ error: 'No preview for this song.' }, { status: 404 });
 	}
 
-	// Deezer's clip links expire after a while, so don't let browsers keep them for long.
+	// Deezer's clip links expire about 15 minutes after the search, so the CDN and the
+	// browser together keep them for at most 10.
 	return NextResponse.json(
 		{ previewUrl },
-		{ headers: { 'Cache-Control': 'private, max-age=600' } },
+		{ headers: { 'Cache-Control': 'public, max-age=300, s-maxage=300' } },
 	);
 }

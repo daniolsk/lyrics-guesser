@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, use, useState } from 'react';
+import { FormEvent, useState, useSyncExternalStore } from 'react';
 
 import { useRouter } from 'next/navigation';
 import Footer from '@/components/ui/Footer';
@@ -12,13 +12,18 @@ const MODES: { value: Mode; label: string; isNew?: boolean }[] = [
 	{ value: 'lyrics', label: 'Fill in the lyrics', isNew: true },
 ];
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+// The games link back with their mode, so the player lands on the mode they just played.
+// It's read in the browser, so the page can be served as static HTML instead of being
+// rendered on every visit.
+const getUrlMode = (): Mode =>
+	new URLSearchParams(window.location.search).get('mode') === 'lyrics' ? 'lyrics' : 'song';
 
-export default function Home({ searchParams }: { searchParams: SearchParams }) {
-	// The games link back with their mode, so the player lands on the mode they just played.
-	const initialMode: Mode = use(searchParams).mode === 'lyrics' ? 'lyrics' : 'song';
+const subscribeToUrl = () => () => {};
 
-	const [mode, setMode] = useState<Mode>(initialMode);
+export default function Home() {
+	const urlMode = useSyncExternalStore(subscribeToUrl, getUrlMode, (): Mode => 'song');
+	const [pickedMode, setMode] = useState<Mode | null>(null);
+	const mode = pickedMode ?? urlMode;
 	const [artist, setArtist] = useState('');
 	const [market, setMarket] = useState('');
 	const router = useRouter();
@@ -57,7 +62,7 @@ export default function Home({ searchParams }: { searchParams: SearchParams }) {
 							>
 								{label}
 								{isNew && (
-									<span className="animate-background-scroll absolute -top-2.5 -right-3 bg-linear-to-r from-red-400 to-green-400 bg-size-[500%] px-1.5 text-[10px] leading-4 font-extrabold tracking-wider text-black md:text-xs">
+									<span className="absolute -top-2.5 -right-3 animate-background-scroll bg-linear-to-r from-red-400 to-green-400 bg-size-[500%] px-1.5 text-[10px] leading-4 font-extrabold tracking-wider text-black md:text-xs">
 										NEW
 									</span>
 								)}
@@ -70,6 +75,7 @@ export default function Home({ searchParams }: { searchParams: SearchParams }) {
 								type="text"
 								className="border-b-2 bg-transparent p-2 text-center text-lg font-semibold focus:outline-hidden active:outline-hidden md:p-3 md:text-xl"
 								placeholder="Artist name e.g. Eminem"
+								maxLength={100}
 								value={artist}
 								onChange={(e) => setArtist(e.target.value)}
 								spellCheck={false}
