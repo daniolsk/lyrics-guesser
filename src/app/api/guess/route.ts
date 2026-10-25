@@ -5,6 +5,7 @@ import { incrementSongsPlayed } from '@/utils/stats';
 
 const MAX_SONG_KEYS = 50;
 const MAX_SONG_KEY_LENGTH = 200;
+const MAX_ARTIST_LENGTH = 100;
 
 const parseSongKeys = (value: string | null) =>
 	value
@@ -21,6 +22,12 @@ export async function GET(request: NextRequest) {
 	const artist = searchParams.get('artist')?.trim();
 	if (!artist) {
 		return NextResponse.json({ error: 'Enter an artist name to start.' }, { status: 400 });
+	}
+	if (artist.length > MAX_ARTIST_LENGTH) {
+		return NextResponse.json(
+			{ error: `Artist names can be at most ${MAX_ARTIST_LENGTH} characters long.` },
+			{ status: 400 },
+		);
 	}
 
 	const market = searchParams.get('market') || undefined;
